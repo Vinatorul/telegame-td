@@ -23,7 +23,6 @@ export class Tower extends Phaser.GameObjects.Container {
   private level: TowerLevel = TowerLevel.LEVEL_1;
   private showRange: boolean = false;
   private towerType: TowerType;
-  
   constructor(scene: Phaser.Scene, x: number, y: number, type: TowerType = TowerType.BASIC) {
     super(scene, x, y);
     
@@ -141,8 +140,12 @@ export class Tower extends Phaser.GameObjects.Container {
     if (!this.scene || !enemy) return;
     
     const bullet = this.scene.add.graphics();
-    bullet.x = this.x;
-    bullet.y = this.y;
+    
+    const worldX = this.x;
+    const worldY = this.y;
+    
+    bullet.x = worldX;
+    bullet.y = worldY;
     
     let bulletColor = 0xff0000;
     let bulletSize = 5;
@@ -168,10 +171,15 @@ export class Tower extends Phaser.GameObjects.Container {
     bullet.fillStyle(bulletColor, 1);
     bullet.fillCircle(0, 0, bulletSize);
     
+    const gameScene = this.scene as any;
+    if (gameScene.addToGameField) {
+      gameScene.addToGameField(bullet);
+    }
+    
     if (this.scene.tweens) {
       const targetX = enemy.x;
       const targetY = enemy.y;
-
+      
       this.scene.tweens.add({
         targets: bullet,
         x: targetX,

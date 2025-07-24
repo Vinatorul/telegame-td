@@ -6,6 +6,11 @@ import { TowerSelector } from '../ui';
 import { currentOrientation } from '../game';
 
 export class GameScene extends Phaser.Scene {
+  public addToGameField(gameObject: Phaser.GameObjects.GameObject): void {
+    if (this.gameFieldContainer) {
+      this.gameFieldContainer.add(gameObject);
+    }
+  }
   private towers: Phaser.GameObjects.Group;
   private enemies: Phaser.GameObjects.Group;
   private path: Phaser.Curves.Path;
