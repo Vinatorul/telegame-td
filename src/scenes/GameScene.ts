@@ -207,26 +207,24 @@ export class GameScene extends Phaser.Scene {
   }
   
   private calculateGameArea() {
-    const fixedGridWidth = 20;
-    const fixedGridHeight = 15;
+    const pixelRatio = window.devicePixelRatio || 1;
+    const physicalTileSize = 38;
     
-    const maxTileWidth = Math.floor(this.gameWidth / fixedGridWidth);
-    const maxTileHeight = Math.floor(this.gameHeight / fixedGridHeight);
-    
-    this.tileSize = Math.min(maxTileWidth, maxTileHeight);
-    
+    this.tileSize = Math.round(physicalTileSize * pixelRatio);
     this.tileSize = Math.max(20, this.tileSize);
     
-    const fixedWidth = fixedGridWidth * this.tileSize;
-    const fixedHeight = fixedGridHeight * this.tileSize;
+    const gridWidth = 20;
+    const gridHeight = 20;
     
     this.gameArea = {
-      width: fixedWidth,
-      height: fixedHeight
+      width: gridWidth * this.tileSize,
+      height: gridHeight * this.tileSize
     };
     
     console.log(`Screen dimensions: ${this.gameWidth}x${this.gameHeight}`);
+    console.log(`Device pixel ratio: ${pixelRatio}`);
     console.log(`Calculated tile size: ${this.tileSize}`);
+    console.log(`Grid dimensions: ${gridWidth}x${gridHeight}`);
     console.log(`Game area dimensions: ${this.gameArea.width}x${this.gameArea.height}`);
   }
   
@@ -245,10 +243,10 @@ export class GameScene extends Phaser.Scene {
   private createPath() {
     let pathCoords;
     
+    const gridWidth = 20;
+    const gridHeight = 20;
+    
     if (currentOrientation === Orientation.LANDSCAPE) {
-      const gridWidth = Math.floor(this.gameArea.width / this.tileSize);
-      const gridHeight = Math.floor(this.gameArea.height / this.tileSize);
-      
       pathCoords = [
         [Math.floor(gridHeight / 2), 0],
         [Math.floor(gridHeight / 2), Math.floor(gridHeight / 3)],
@@ -259,9 +257,6 @@ export class GameScene extends Phaser.Scene {
         [gridWidth - 1, Math.floor(gridHeight / 2)]
       ];
     } else {
-      const gridWidth = Math.floor(this.gameArea.width / this.tileSize);
-      const gridHeight = Math.floor(this.gameArea.height / this.tileSize);
-      
       pathCoords = [
         [0, Math.floor(gridWidth / 2)],
         [Math.floor(gridHeight / 4), Math.floor(gridWidth / 2)],

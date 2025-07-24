@@ -31,7 +31,7 @@ export class TileMap {
     this.container = container;
     
     this.gridWidth = 20;
-    this.gridHeight = 15;
+    this.gridHeight = 20;
     
     this.width = this.gridWidth * this.tileSize;
     this.height = this.gridHeight * this.tileSize;
@@ -174,6 +174,7 @@ export class TileMap {
     this.width = this.gridWidth * this.tileSize;
     this.height = this.gridHeight * this.tileSize;
     
+    console.log(`Grid dimensions: ${this.gridWidth}x${this.gridHeight}`);
     console.log(`TileMap dimensions after resize: ${this.width}x${this.height}`);
   }
   

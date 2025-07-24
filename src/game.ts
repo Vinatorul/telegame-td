@@ -11,25 +11,9 @@ window.addEventListener('load', () => {
   let width = DEFAULT_WIDTH;
   let height = DEFAULT_HEIGHT;
   
-  if (window.Telegram && window.Telegram.WebApp) {
-    console.log('Telegram Web App detected');
-    window.Telegram.WebApp.ready();
-    
-    const viewportHeight = window.Telegram.WebApp.viewportHeight;
-    const viewportWidth = window.Telegram.WebApp.viewportStableWidth;
-    
-    console.log(`Telegram viewport: ${viewportWidth}x${viewportHeight}`);
-    
-    if (viewportHeight && viewportWidth) {
-      width = viewportWidth;
-      height = viewportHeight;
-      console.log(`Game size adjusted to: ${width}x${height}`);
-    }
-  } else {
-    console.log('Telegram Web App not detected, using default size');
-    width = window.innerWidth;
-    height = window.innerHeight;
-  }
+  width = window.innerWidth;
+  height = window.innerHeight;
+  console.log(`Game size adjusted to: ${width}x${height}`);
   
   currentOrientation = getOrientation(width, height);
   console.log(`Initial orientation: ${currentOrientation === Orientation.LANDSCAPE ? 'Landscape' : 'Portrait'}`);
@@ -49,13 +33,8 @@ window.addEventListener('load', () => {
   const handleResize = () => {
     let newWidth, newHeight;
     
-    if (window.Telegram && window.Telegram.WebApp) {
-      newWidth = window.Telegram.WebApp.viewportStableWidth;
-      newHeight = window.Telegram.WebApp.viewportHeight;
-    } else {
-      newWidth = window.innerWidth;
-      newHeight = window.innerHeight;
-    }
+    newWidth = window.innerWidth;
+    newHeight = window.innerHeight;
     
     console.log(`Window resized to: ${newWidth}x${newHeight}`);
     
