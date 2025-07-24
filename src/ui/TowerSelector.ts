@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Tower, TowerType } from '../objects';
 import { TileMap } from '../systems';
-import { Orientation, UI_PADDING } from '../config';
+import { UI_PADDING } from '../config';
 
 export class TowerSelector {
   private scene: Phaser.Scene;
@@ -14,12 +14,9 @@ export class TowerSelector {
     [TowerType.ARCHER]: 75,
     [TowerType.MAGE]: 100
   };
-  private orientation: Orientation;
-  
-  constructor(scene: Phaser.Scene, tileMap: TileMap, orientation: Orientation) {
+  constructor(scene: Phaser.Scene, tileMap: TileMap) {
     this.scene = scene;
     this.tileMap = tileMap;
-    this.orientation = orientation;
     this.buttons = this.createButtons();
   }
   
@@ -28,65 +25,34 @@ export class TowerSelector {
     const gameHeight = this.scene.scale.height;
     let container: Phaser.GameObjects.Container;
     
-    if (this.orientation === Orientation.LANDSCAPE) {
-      container = this.scene.add.container(UI_PADDING, gameHeight - 90);
-      
-      const bg = this.scene.add.rectangle(0, 0, gameWidth - UI_PADDING * 2, 80, 0x333333, 0.8);
-      bg.setOrigin(0, 0);
-      container.add(bg);
-      
-      const title = this.scene.add.text(10, 10, 'Towers', {
-        fontSize: '18px',
-        color: '#ffffff'
-      });
-      container.add(title);
-      
-      const buttonSize = 50;
-      const padding = 10;
-      const startX = 20;
-      const startY = 40;
-      
-      const towerTypes = [
-        { type: TowerType.BASIC, color: 0x3498db },
-        { type: TowerType.ARCHER, color: 0x2ecc71 },
-        { type: TowerType.MAGE, color: 0x9b59b6 }
-      ];
-      
-      towerTypes.forEach((tower, index) => {
-        const x = startX + index * (buttonSize + padding);
-        const button = this.createTowerButton(x, startY, buttonSize, tower.type, tower.color);
-        container.add(button);
-      });
-    } else {
-      container = this.scene.add.container(gameWidth - 90, UI_PADDING);
-      
-      const bg = this.scene.add.rectangle(0, 0, 80, gameHeight - UI_PADDING * 2, 0x333333, 0.8);
-      bg.setOrigin(0, 0);
-      container.add(bg);
-      
-      const title = this.scene.add.text(10, 10, 'Towers', {
-        fontSize: '16px',
-        color: '#ffffff'
-      });
-      container.add(title);
-      
-      const buttonSize = 50;
-      const padding = 10;
-      const startX = 15;
-      const startY = 40;
-      
-      const towerTypes = [
-        { type: TowerType.BASIC, color: 0x3498db },
-        { type: TowerType.ARCHER, color: 0x2ecc71 },
-        { type: TowerType.MAGE, color: 0x9b59b6 }
-      ];
-      
-      towerTypes.forEach((tower, index) => {
-        const y = startY + index * (buttonSize + padding);
-        const button = this.createTowerButton(startX, y, buttonSize, tower.type, tower.color);
-        container.add(button);
-      });
-    }
+    container = this.scene.add.container(UI_PADDING, gameHeight - 90);
+    
+    const bg = this.scene.add.rectangle(0, 0, gameWidth - UI_PADDING * 2, 80, 0x333333, 0.8);
+    bg.setOrigin(0, 0);
+    container.add(bg);
+    
+    const title = this.scene.add.text(10, 10, 'Towers', {
+      fontSize: '18px',
+      color: '#ffffff'
+    });
+    container.add(title);
+    
+    const buttonSize = 50;
+    const padding = 10;
+    const startX = 20;
+    const startY = 40;
+    
+    const towerTypes = [
+      { type: TowerType.BASIC, color: 0x3498db },
+      { type: TowerType.ARCHER, color: 0x2ecc71 },
+      { type: TowerType.MAGE, color: 0x9b59b6 }
+    ];
+    
+    towerTypes.forEach((tower, index) => {
+      const x = startX + index * (buttonSize + padding);
+      const button = this.createTowerButton(x, startY, buttonSize, tower.type, tower.color);
+      container.add(button);
+    });
     
     return container;
   }

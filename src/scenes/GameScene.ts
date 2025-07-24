@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
 import { Tower, Enemy, EnemyType, TowerType } from '../objects';
-import { BG_COLOR, PATH_COLOR, Orientation, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
+import { BG_COLOR, PATH_COLOR, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
 import { TileMap, TileType } from '../systems';
 import { TowerSelector } from '../ui';
-import { currentOrientation } from '../game';
 
 export class GameScene extends Phaser.Scene {
   public addToGameField(gameObject: Phaser.GameObjects.GameObject): void {
@@ -43,8 +42,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.gameWidth = this.scale.width;
-    this.gameHeight = this.scale.height;
+    this.gameWidth = DEFAULT_WIDTH;
+    this.gameHeight = DEFAULT_HEIGHT;
     
     this.setupLayout();
     
@@ -64,10 +63,6 @@ export class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
-    
-    this.events.on('orientationchange', this.handleOrientationChange, this);
-    this.events.on('resize', this.handleResize, this);
-    this.scale.on('resize', this.handleResize, this);
   }
   
   private setupInputHandlers() {
@@ -90,15 +85,9 @@ export class GameScene extends Phaser.Scene {
         
         let visibleWidth, visibleHeight;
         
-        if (currentOrientation === Orientation.LANDSCAPE) {
-          const towerSelectorHeight = 100;
-          visibleHeight = this.gameHeight - towerSelectorHeight;
-          visibleWidth = this.gameWidth;
-        } else {
-          const towerSelectorWidth = 100;
-          visibleWidth = this.gameWidth - towerSelectorWidth;
-          visibleHeight = this.gameHeight;
-        }
+        const towerSelectorHeight = 100;
+        visibleHeight = this.gameHeight - towerSelectorHeight;
+        visibleWidth = this.gameWidth;
         
         const minX = Math.min(0, visibleWidth - this.gameArea.width);
         const minY = Math.min(0, visibleHeight - this.gameArea.height);
@@ -201,13 +190,12 @@ export class GameScene extends Phaser.Scene {
     
     this.towerSelector = new TowerSelector(
       this,
-      this.tileMap,
-      currentOrientation
+      this.tileMap
     );
   }
   
   private calculateGameArea() {
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = /* window.devicePixelRatio || */ 1;
     const physicalTileSize = 38;
     
     this.tileSize = Math.round(physicalTileSize * pixelRatio);
@@ -246,28 +234,15 @@ export class GameScene extends Phaser.Scene {
     const gridWidth = 20;
     const gridHeight = 20;
     
-    if (currentOrientation === Orientation.LANDSCAPE) {
-      pathCoords = [
-        [Math.floor(gridHeight / 2), 0],
-        [Math.floor(gridHeight / 2), Math.floor(gridHeight / 3)],
-        [Math.floor(gridHeight / 5), Math.floor(gridHeight / 3)],
-        [Math.floor(gridHeight / 5), Math.floor(gridHeight * 2 / 3)],
-        [Math.floor(gridHeight * 3 / 5), Math.floor(gridHeight * 2 / 3)],
-        [Math.floor(gridHeight * 3 / 5), Math.floor(gridHeight / 2)],
-        [gridWidth - 1, Math.floor(gridHeight / 2)]
-      ];
-    } else {
-      pathCoords = [
-        [0, Math.floor(gridWidth / 2)],
-        [Math.floor(gridHeight / 4), Math.floor(gridWidth / 2)],
-        [Math.floor(gridHeight / 4), Math.floor(gridWidth / 4)],
-        [Math.floor(gridHeight / 2), Math.floor(gridWidth / 4)],
-        [Math.floor(gridHeight / 2), Math.floor(gridWidth * 3 / 4)],
-        [Math.floor(gridHeight * 3 / 4), Math.floor(gridWidth * 3 / 4)],
-        [Math.floor(gridHeight * 3 / 4), Math.floor(gridWidth / 2)],
-        [gridHeight - 1, Math.floor(gridWidth / 2)]
-      ];
-    }
+    pathCoords = [
+      [Math.floor(gridHeight / 2), 0],
+      [Math.floor(gridHeight / 2), Math.floor(gridHeight / 3)],
+      [Math.floor(gridHeight / 5), Math.floor(gridHeight / 3)],
+      [Math.floor(gridHeight / 5), Math.floor(gridHeight * 2 / 3)],
+      [Math.floor(gridHeight * 3 / 5), Math.floor(gridHeight * 2 / 3)],
+      [Math.floor(gridHeight * 3 / 5), Math.floor(gridHeight / 2)],
+      [gridWidth - 1, Math.floor(gridHeight / 2)]
+    ];
     
     this.path = this.tileMap.createPath(pathCoords);
     this.tileMap.render();
@@ -348,80 +323,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
   
-  private handleOrientationChange(orientation: Orientation) {
-    this.updateLayout();
-  }
-  
-  private handleResize(gameSize: any) {
-    if (gameSize.width !== undefined && gameSize.height !== undefined) {
-      this.gameWidth = gameSize.width;
-      this.gameHeight = gameSize.height;
-      
-      console.log(`Game resized to: ${this.gameWidth}x${this.gameHeight}`);
-      this.updateLayout();
-    }
-  }
-  
-  private updateLayout() {
-    if (this.background) {
-      this.background.setPosition(this.gameWidth / 2, this.gameHeight / 2);
-      this.background.setSize(this.gameWidth, this.gameHeight);
-    }
-    
-    if (this.gameFieldContainer) {
-      this.gameFieldContainer.setPosition(0, 0);
-    }
-    
-    this.calculateGameArea();
-    
-    if (this.gameFieldContainer) {
-      let visibleWidth, visibleHeight;
-      
-      if (currentOrientation === Orientation.LANDSCAPE) {
-        const towerSelectorHeight = 100;
-        visibleHeight = this.gameHeight - towerSelectorHeight;
-        visibleWidth = this.gameWidth;
-      } else {
-        const towerSelectorWidth = 100;
-        visibleWidth = this.gameWidth - towerSelectorWidth;
-        visibleHeight = this.gameHeight;
-      }
-      
-      this.gameFieldContainer.setInteractive(
-        new Phaser.Geom.Rectangle(0, 0, visibleWidth, visibleHeight),
-        Phaser.Geom.Rectangle.Contains
-      );
-    }
-    
-    if (this.tileMap) {
-      this.tileMap.resize(this.gameArea.width, this.gameArea.height);
-      
-      this.createPath();
-      this.tileMap.render();
-      
-      if (this.path && this.enemies) {
-        this.enemies.getChildren().forEach((enemy: any) => {
-          if (enemy.setPath) {
-            enemy.setPath(this.path);
-          }
-        });
-      }
-    }
-    
-    if (this.towerSelector) {
-      this.towerSelector.destroy();
-      this.towerSelector = new TowerSelector(
-        this,
-        this.tileMap,
-        currentOrientation
-      );
-    }
-    
-    if (this.uiContainer) {
-      this.uiContainer.setPosition(UI_PADDING, UI_PADDING);
-    }
-  }
-  
   private resetGame() {
     this.towers.clear(true, true);
     this.enemies.clear(true, true);
@@ -442,20 +343,10 @@ export class GameScene extends Phaser.Scene {
   }
   
   private isPointerInGameArea(pointer: Phaser.Input.Pointer): boolean {
-    let visibleWidth, visibleHeight;
+    const towerSelectorHeight = 100;
+    const visibleHeight = this.gameHeight - towerSelectorHeight;
+    const visibleWidth = this.gameWidth;
     
-    if (currentOrientation === Orientation.LANDSCAPE) {
-      const towerSelectorHeight = 100;
-      visibleHeight = this.gameHeight - towerSelectorHeight;
-      visibleWidth = this.gameWidth;
-      
-      return pointer.y < visibleHeight;
-    } else {
-      const towerSelectorWidth = 100;
-      visibleWidth = this.gameWidth - towerSelectorWidth;
-      visibleHeight = this.gameHeight;
-      
-      return pointer.x < visibleWidth;
-    }
+    return pointer.y < visibleHeight;
   }
 }

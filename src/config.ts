@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
-export const DEFAULT_WIDTH = 800;
-export const DEFAULT_HEIGHT = 600;
+export const DEFAULT_WIDTH = 422;
+export const DEFAULT_HEIGHT = 625;
 
 export const UI_PADDING = 20;
 export const UI_ELEMENT_SPACING = 30;
@@ -33,13 +33,3 @@ export const TOWER_COLOR = 0x3498db;
 export const ENEMY_COLOR = 0xe74c3c;
 export const BG_COLOR = 0x444444;
 export const PATH_COLOR = 0xffffff;
-
-// Orientation detection
-export enum Orientation {
-  LANDSCAPE,
-  PORTRAIT
-}
-
-export function getOrientation(width: number, height: number): Orientation {
-  return width >= height ? Orientation.LANDSCAPE : Orientation.PORTRAIT;
-}
