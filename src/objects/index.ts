@@ -1,2 +1,2 @@
-export { Tower } from './Tower';
-export { Enemy } from './Enemy';
+export { Tower, TowerLevel, TowerType } from './Tower';
+export { Enemy, EnemyType } from './Enemy';
