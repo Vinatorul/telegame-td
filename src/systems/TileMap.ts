@@ -15,21 +15,49 @@ export class TileMap {
   private gridHeight: number;
   private tiles: TileType[][];
   private graphics: Phaser.GameObjects.Graphics;
+  private width: number;
+  private height: number;
+  private container: Phaser.GameObjects.Container;
   
-  constructor(scene: Phaser.Scene, width: number, height: number, tileSize: number) {
+  constructor(
+    scene: Phaser.Scene,
+    width: number,
+    height: number,
+    tileSize: number,
+    container: Phaser.GameObjects.Container
+  ) {
     this.scene = scene;
     this.tileSize = tileSize;
-    this.gridWidth = Math.floor(width / tileSize);
-    this.gridHeight = Math.floor(height / tileSize);
-    this.graphics = scene.add.graphics();
+    this.container = container;
     
-    this.tiles = Array(this.gridHeight).fill(null).map(() => 
+    this.gridWidth = 20;
+    this.gridHeight = 15;
+    
+    this.width = this.gridWidth * this.tileSize;
+    this.height = this.gridHeight * this.tileSize;
+    
+    this.graphics = scene.add.graphics();
+    this.container.add(this.graphics);
+    
+    this.resetTiles();
+  }
+  
+  private resetTiles(): void {
+    this.tiles = Array(this.gridHeight).fill(null).map(() =>
       Array(this.gridWidth).fill(TileType.EMPTY)
     );
   }
   
   public createPath(path: number[][]): Phaser.Curves.Path {
     const phaserPath = new Phaser.Curves.Path();
+    
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (this.tiles[y][x] === TileType.PATH) {
+          this.tiles[y][x] = TileType.EMPTY;
+        }
+      }
+    }
     
     path.forEach(point => {
       const [gridY, gridX] = point;
@@ -124,6 +152,10 @@ export class TileMap {
   }
   
   public highlightTile(gridX: number, gridY: number, valid: boolean): void {
+    if (gridX < 0 || gridX >= this.gridWidth || gridY < 0 || gridY >= this.gridHeight) {
+      return;
+    }
+    
     const tileX = gridX * this.tileSize;
     const tileY = gridY * this.tileSize;
     
@@ -133,5 +165,22 @@ export class TileMap {
   
   public clearHighlight(): void {
     this.render();
+  }
+  
+  public resize(width: number, height: number): void {
+    console.log(`TileMap.resize called with width=${width}, height=${height}`);
+    console.log(`Current tileSize=${this.tileSize}`);
+    
+    this.width = this.gridWidth * this.tileSize;
+    this.height = this.gridHeight * this.tileSize;
+    
+    console.log(`TileMap dimensions after resize: ${this.width}x${this.height}`);
+  }
+  
+  public getGridDimensions(): { width: number, height: number } {
+    return {
+      width: this.gridWidth,
+      height: this.gridHeight
+    };
   }
 }

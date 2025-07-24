@@ -115,6 +115,10 @@ export class Enemy extends Phaser.GameObjects.Container {
     }
   }
   
+  setPath(newPath: Phaser.Curves.Path) {
+    this.path = newPath;
+  }
+  
   takeDamage(amount: number) {
     this.health -= amount;
     this.updateHealthBar();

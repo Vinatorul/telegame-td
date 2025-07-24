@@ -1,9 +1,15 @@
 import Phaser from 'phaser';
 
+export const DEFAULT_WIDTH = 800;
+export const DEFAULT_HEIGHT = 600;
+
+export const UI_PADDING = 20;
+export const UI_ELEMENT_SPACING = 30;
+
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: DEFAULT_WIDTH,
+  height: DEFAULT_HEIGHT,
   parent: 'game',
   physics: {
     default: 'arcade',
@@ -15,12 +21,25 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#444444',
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: DEFAULT_WIDTH,
+    height: DEFAULT_HEIGHT
   },
   pixelArt: true
 };
 
+// Game colors
 export const TOWER_COLOR = 0x3498db;
 export const ENEMY_COLOR = 0xe74c3c;
 export const BG_COLOR = 0x444444;
 export const PATH_COLOR = 0xffffff;
+
+// Orientation detection
+export enum Orientation {
+  LANDSCAPE,
+  PORTRAIT
+}
+
+export function getOrientation(width: number, height: number): Orientation {
+  return width >= height ? Orientation.LANDSCAPE : Orientation.PORTRAIT;
+}
