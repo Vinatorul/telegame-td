@@ -16,8 +16,10 @@ export class GameScene extends Phaser.Scene {
   private tileMap: TileMap;
   private tileSize: number;
   private hoveredTile: { gridX: number; gridY: number } | null = null;
+  private selectedTile: { gridX: number; gridY: number } | null = null;
   private towerSelector: TowerSelector;
   private background: Phaser.GameObjects.Rectangle;
+  private selectedTileMarker: Phaser.GameObjects.Graphics;
 
   public gold = 200;
   private lives = 20;
@@ -49,6 +51,9 @@ export class GameScene extends Phaser.Scene {
 
     this.towers = this.add.group();
     this.enemies = this.add.group();
+    
+    this.selectedTileMarker = this.add.graphics();
+    this.gameFieldContainer.add(this.selectedTileMarker);
 
     this.events.on('enemyDefeated', (goldAmount: number) => {
       this.gold += goldAmount;
@@ -70,6 +75,8 @@ export class GameScene extends Phaser.Scene {
       this.isDragging = true;
       this.dragStartX = pointer.x;
       this.dragStartY = pointer.y;
+      
+      this.deselectAllTowers();
     });
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -131,12 +138,10 @@ export class GameScene extends Phaser.Scene {
 
           const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
 
-          const selectedTowerType = this.towerSelector.getSelectedTowerType();
-          if (selectedTowerType && this.tileMap.canPlaceTower(gridX, gridY)) {
-            const cost = this.towerSelector.getTowerCost(selectedTowerType);
-            if (this.gold >= cost) {
-              this.placeTower(gridX, gridY);
-            }
+          if (this.tileMap.canPlaceTower(gridX, gridY)) {
+            this.selectTile(gridX, gridY);
+          } else {
+            this.clearSelectedTile();
           }
         }
 
@@ -166,6 +171,14 @@ export class GameScene extends Phaser.Scene {
 
     this.towers.getChildren().forEach((tower: any) => {
       tower.update(time, this.enemies);
+    });
+  }
+  
+  private deselectAllTowers() {
+    this.towers.getChildren().forEach((tower: any) => {
+      if (tower.deselectTower) {
+        tower.deselectTower();
+      }
     });
   }
 
@@ -270,16 +283,44 @@ export class GameScene extends Phaser.Scene {
     this.uiContainer.add([this.goldText, this.livesText, this.waveText]);
   }
 
-  private placeTower(gridX: number, gridY: number) {
-    const selectedTowerType = this.towerSelector.getSelectedTowerType();
-    if (!selectedTowerType) return;
+  private selectTile(gridX: number, gridY: number) {
+    this.selectedTile = { gridX, gridY };
+    this.drawSelectedTileMarker();
+    
+    this.towerSelector.setEnabled(true);
+    this.towerSelector.clearSelection();
+  }
+  
+  private clearSelectedTile() {
+    this.selectedTile = null;
+    this.selectedTileMarker.clear();
+    
+    this.towerSelector.setEnabled(false);
+    this.towerSelector.clearSelection();
+  }
+  
+  private drawSelectedTileMarker() {
+    this.selectedTileMarker.clear();
+    
+    if (this.selectedTile) {
+      const { x, y } = this.tileMap.gridToPixel(this.selectedTile.gridX, this.selectedTile.gridY);
+      const halfTileSize = this.tileSize / 2;
+      
+      this.selectedTileMarker.lineStyle(3, 0xffff00, 1);
+      this.selectedTileMarker.strokeRect(
+        x - halfTileSize,
+        y - halfTileSize,
+        this.tileSize,
+        this.tileSize
+      );
+    }
+  }
 
-    const cost = this.towerSelector.getTowerCost(selectedTowerType);
+  private placeTower(gridX: number, gridY: number, towerType: TowerType) {
+    const cost = this.towerSelector.getTowerCost(towerType);
 
     if (this.tileMap.placeTower(gridX, gridY)) {
       const { x, y } = this.tileMap.gridToPixel(gridX, gridY);
-
-      const towerType = selectedTowerType as TowerType;
 
       const tower = new Tower(this, x, y, towerType);
       this.towers.add(tower);
@@ -288,6 +329,8 @@ export class GameScene extends Phaser.Scene {
       this.gold -= cost;
       this.goldText.setText(`Gold: ${this.gold}`);
       this.tileMap.render();
+      
+      this.clearSelectedTile();
     }
   }
 

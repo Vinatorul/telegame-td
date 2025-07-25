@@ -14,10 +14,26 @@ export class TowerSelector {
     [TowerType.ARCHER]: 75,
     [TowerType.MAGE]: 100
   };
+  private enabled = false;
+  private disabledOverlay: Phaser.GameObjects.Rectangle;
   constructor(scene: Phaser.Scene, tileMap: TileMap) {
     this.scene = scene;
     this.tileMap = tileMap;
     this.buttons = this.createButtons();
+    
+    const gameWidth = this.scene.scale.width;
+    this.disabledOverlay = this.scene.add.rectangle(
+      0,
+      0,
+      gameWidth - UI_PADDING * 2,
+      80,
+      0x000000,
+      0.7
+    );
+    this.disabledOverlay.setOrigin(0, 0);
+    this.buttons.add(this.disabledOverlay);
+    
+    this.setEnabled(false);
   }
 
   private createButtons(): Phaser.GameObjects.Container {
@@ -68,7 +84,16 @@ export class TowerSelector {
     const button = this.scene.add.rectangle(0, 0, size, size, color);
     button.setInteractive();
     button.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (!this.enabled) return;
+      
       this.selectTowerType(towerType);
+      
+      const gameScene = this.scene as any;
+      if (gameScene.selectedTile && gameScene.gold >= this.towerCosts[towerType]) {
+        const { gridX, gridY } = gameScene.selectedTile;
+        gameScene.placeTower(gridX, gridY, towerType);
+      }
+      
       pointer.event.stopPropagation();
     });
     container.add(button);
@@ -118,5 +143,17 @@ export class TowerSelector {
     if (this.buttons) {
       this.buttons.destroy();
     }
+  }
+  
+  public setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    this.disabledOverlay.setVisible(!enabled);
+    
+    Object.values(this.towerButtons).forEach(button => {
+      button.disableInteractive();
+      if (enabled) {
+        button.setInteractive();
+      }
+    });
   }
 }

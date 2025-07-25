@@ -4,6 +4,7 @@ import { TOWERS, TowerType, TowerLevel } from '../config/towerConfig';
 export class Tower extends Phaser.GameObjects.Container {
   private towerSprite: Phaser.GameObjects.Rectangle;
   private rangeCircle: Phaser.GameObjects.Graphics;
+  private upgradeButton: Phaser.GameObjects.Container;
   private range: number;
   private fireRate: number;
   private damage: number;
@@ -11,6 +12,7 @@ export class Tower extends Phaser.GameObjects.Container {
   private level: TowerLevel = TowerLevel.LEVEL_1;
   private showRange = false;
   private towerType: TowerType;
+  private selected = false;
   constructor(scene: Phaser.Scene, x: number, y: number, type: TowerType = TowerType.BASIC) {
     super(scene, x, y);
 
@@ -41,8 +43,16 @@ export class Tower extends Phaser.GameObjects.Container {
     });
 
     this.on('pointerout', () => {
-      this.drawRange(false);
+      if (!this.selected) {
+        this.drawRange(false);
+      }
     });
+
+    this.on('pointerdown', () => {
+      this.selectTower();
+    });
+
+    this.createUpgradeButton();
   }
 
   update(time: number, enemies: Phaser.GameObjects.Group) {
@@ -54,6 +64,77 @@ export class Tower extends Phaser.GameObjects.Container {
         this.lastFired = time;
       }
     }
+  }
+
+  private createUpgradeButton() {
+    this.upgradeButton = this.scene.add.container(0, -40);
+    this.upgradeButton.setVisible(false);
+    this.add(this.upgradeButton);
+
+    const nextLevel = this.level < TowerLevel.LEVEL_3 ? this.level + 1 : this.level;
+    const upgradeCost = TOWERS[this.towerType].levels[nextLevel].upgradeCost || 0;
+
+    const bg = this.scene.add.rectangle(0, 0, 70, 20, 0x333333, 0.8);
+    bg.setStrokeStyle(1, 0xffffff);
+    this.upgradeButton.add(bg);
+
+    const text = this.scene.add.text(0, 0, `Upgrade: ${upgradeCost}`, {
+      fontSize: '10px',
+      color: '#ffffff'
+    });
+    text.setOrigin(0.5);
+    this.upgradeButton.add(text);
+
+    if (this.level < TowerLevel.LEVEL_3) {
+      bg.setInteractive();
+      bg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        pointer.event.stopPropagation();
+        this.tryUpgrade();
+      });
+    } else {
+      text.setText('Max Level');
+    }
+  }
+
+  private selectTower() {
+    this.selected = true;
+    this.drawRange(true);
+    this.upgradeButton.setVisible(true);
+
+    // Deselect other towers
+    const gameScene = this.scene as any;
+    if (gameScene.towers) {
+      gameScene.towers.getChildren().forEach((tower: Tower) => {
+        if (tower !== this && tower.selected) {
+          tower.deselectTower();
+        }
+      });
+    }
+  }
+
+  public deselectTower() {
+    this.selected = false;
+    this.drawRange(false);
+    this.upgradeButton.setVisible(false);
+  }
+
+  private tryUpgrade() {
+    if (this.level === TowerLevel.LEVEL_3) {
+      return false;
+    }
+
+    const nextLevel = this.level + 1;
+    const upgradeCost = TOWERS[this.towerType].levels[nextLevel].upgradeCost || 0;
+    
+    const gameScene = this.scene as any;
+    if (gameScene.gold >= upgradeCost) {
+      gameScene.gold -= upgradeCost;
+      gameScene.goldText.setText(`Gold: ${gameScene.gold}`);
+      this.upgrade();
+      return true;
+    }
+    
+    return false;
   }
 
   upgrade(): boolean {
@@ -70,6 +151,10 @@ export class Tower extends Phaser.GameObjects.Container {
     this.towerSprite.fillColor = config.color;
 
     this.drawRange(this.showRange);
+    
+    this.upgradeButton.removeAll(true);
+    this.createUpgradeButton();
+    
     return true;
   }
 
