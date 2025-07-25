@@ -5,7 +5,10 @@
   "scripts": {
     "start": "parcel src/index.html --open",
     "build": "parcel build src/index.html --public-url ./",
-    "deploy": "./deploy-gh-pages.sh"
+    "deploy": "./deploy-gh-pages.sh",
+    "lint": "eslint 'src/**/*.{js,ts}'",
+    "lint:fix": "eslint 'src/**/*.{js,ts}' --fix",
+    "format": "prettier --write 'src/**/*.{js,ts,json,html,css}'"
   },
   "dependencies": {
     "phaser": "^3.60.0"
@@ -16,6 +19,7 @@
     "@typescript-eslint/parser": "^5.59.2",
     "eslint": "^8.40.0",
     "parcel": "^2.15.4",
+    "prettier": "^2.8.8",
     "process": "^0.11.10",
     "typescript": "^5.0.4"
   }

@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Telegram Game</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: #666; /* Lighter background */
-    }
-    #game {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100vh;
-      border: 2px solid red; /* Debug border */
-    }
-    canvas {
-      border: 2px solid green; /* Debug border for canvas */
-    }
-  </style>
-</head>
-<body>
-  <div id="game"></div>
-  <script type="module" src="index.ts"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Telegram Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #666; /* Lighter background */
+      }
+      #game {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100vh;
+        border: 2px solid red; /* Debug border */
+      }
+      canvas {
+        border: 2px solid green; /* Debug border for canvas */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <script type="module" src="index.ts"></script>
+  </body>
 </html>
