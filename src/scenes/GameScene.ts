@@ -51,7 +51,7 @@ export class GameScene extends Phaser.Scene {
 
     this.towers = this.add.group();
     this.enemies = this.add.group();
-    
+
     this.selectedTileMarker = this.add.graphics();
     this.gameFieldContainer.add(this.selectedTileMarker);
 
@@ -75,7 +75,7 @@ export class GameScene extends Phaser.Scene {
       this.isDragging = true;
       this.dragStartX = pointer.x;
       this.dragStartY = pointer.y;
-      
+
       this.deselectAllTowers();
     });
 
@@ -173,7 +173,7 @@ export class GameScene extends Phaser.Scene {
       tower.update(time, this.enemies);
     });
   }
-  
+
   private deselectAllTowers() {
     this.towers.getChildren().forEach((tower: any) => {
       if (tower.deselectTower) {
@@ -286,26 +286,26 @@ export class GameScene extends Phaser.Scene {
   private selectTile(gridX: number, gridY: number) {
     this.selectedTile = { gridX, gridY };
     this.drawSelectedTileMarker();
-    
+
     this.towerSelector.setEnabled(true);
     this.towerSelector.clearSelection();
   }
-  
+
   private clearSelectedTile() {
     this.selectedTile = null;
     this.selectedTileMarker.clear();
-    
+
     this.towerSelector.setEnabled(false);
     this.towerSelector.clearSelection();
   }
-  
+
   private drawSelectedTileMarker() {
     this.selectedTileMarker.clear();
-    
+
     if (this.selectedTile) {
       const { x, y } = this.tileMap.gridToPixel(this.selectedTile.gridX, this.selectedTile.gridY);
       const halfTileSize = this.tileSize / 2;
-      
+
       this.selectedTileMarker.lineStyle(3, 0xffff00, 1);
       this.selectedTileMarker.strokeRect(
         x - halfTileSize,
@@ -329,7 +329,7 @@ export class GameScene extends Phaser.Scene {
       this.gold -= cost;
       this.goldText.setText(`Gold: ${this.gold}`);
       this.tileMap.render();
-      
+
       this.clearSelectedTile();
     }
   }
