@@ -11,7 +11,7 @@ export default tseslint.config(
     plugins: {
       prettier: prettierPlugin
     },
-    ignores: ['jest.config.js', '*.config.js'],
+    ignores: ['jest.config.js', '*.config.js', 'playwright.config.ts'],
     languageOptions: {
       ecmaVersion: 2018,
       sourceType: 'module',

@@ -12,7 +12,11 @@
     "format": "prettier --write 'src/**/*.{js,ts,json,html,css}'",
     "prepare": "husky install",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report"
   },
   "lint-staged": {
     "*.{js,ts}": [
@@ -29,6 +33,7 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@parcel/transformer-typescript-tsc": "^2.15.4",
+    "@playwright/test": "^1.54.1",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
