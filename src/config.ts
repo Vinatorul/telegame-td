@@ -28,8 +28,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   pixelArt: true
 };
 
-// Game colors
-export const TOWER_COLOR = 0x3498db;
-export const ENEMY_COLOR = 0xe74c3c;
 export const BG_COLOR = 0x444444;
 export const PATH_COLOR = 0xffffff;

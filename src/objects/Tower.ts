@@ -1,24 +1,12 @@
 import Phaser from 'phaser';
-import { TOWER_COLOR } from '../config';
-
-export enum TowerLevel {
-  LEVEL_1 = 1,
-  LEVEL_2 = 2,
-  LEVEL_3 = 3
-}
-
-export enum TowerType {
-  BASIC = 'basic',
-  ARCHER = 'archer',
-  MAGE = 'mage'
-}
+import { TOWERS, TowerType, TowerLevel } from '../config/towerConfig';
 
 export class Tower extends Phaser.GameObjects.Container {
   private towerSprite: Phaser.GameObjects.Rectangle;
   private rangeCircle: Phaser.GameObjects.Graphics;
-  private range: number = 150;
-  private fireRate: number = 1000;
-  private damage: number = 20;
+  private range: number;
+  private fireRate: number;
+  private damage: number;
   private lastFired: number = 0;
   private level: TowerLevel = TowerLevel.LEVEL_1;
   private showRange: boolean = false;
@@ -28,27 +16,11 @@ export class Tower extends Phaser.GameObjects.Container {
     
     this.towerType = type;
     
-    let color = TOWER_COLOR;
-    
-    switch (type) {
-      case TowerType.ARCHER:
-        color = 0x2ecc71;
-        this.range = 200;
-        this.fireRate = 1200;
-        this.damage = 15;
-        break;
-      case TowerType.MAGE:
-        color = 0x9b59b6;
-        this.range = 150;
-        this.fireRate = 1500;
-        this.damage = 30;
-        break;
-      default:
-        color = TOWER_COLOR;
-        this.range = 150;
-        this.fireRate = 1000;
-        this.damage = 20;
-    }
+    const config = TOWERS[type].levels[TowerLevel.LEVEL_1];
+    const color = config.color;
+    this.range = config.range;
+    this.fireRate = config.fireRate;
+    this.damage = config.damage;
     
     this.towerSprite = new Phaser.GameObjects.Rectangle(scene, 0, 0, 32, 32, color);
     this.add(this.towerSprite);
@@ -89,20 +61,11 @@ export class Tower extends Phaser.GameObjects.Container {
     
     this.level++;
     
-    switch (this.level) {
-      case TowerLevel.LEVEL_2:
-        this.range += 50;
-        this.damage += 10;
-        this.fireRate -= 200;
-        this.towerSprite.fillColor = 0x2980b9;
-        break;
-      case TowerLevel.LEVEL_3:
-        this.range += 50;
-        this.damage += 15;
-        this.fireRate -= 200;
-        this.towerSprite.fillColor = 0x1c4966;
-        break;
-    }
+    const config = TOWERS[this.towerType].levels[this.level];
+    this.range = config.range;
+    this.damage = config.damage;
+    this.fireRate = config.fireRate;
+    this.towerSprite.fillColor = config.color;
     
     this.drawRange(this.showRange);
     return true;
@@ -147,26 +110,10 @@ export class Tower extends Phaser.GameObjects.Container {
     bullet.x = worldX;
     bullet.y = worldY;
     
-    let bulletColor = 0xff0000;
-    let bulletSize = 5;
-    let duration = 200;
-    
-    switch (this.towerType) {
-      case TowerType.ARCHER:
-        bulletColor = 0x2ecc71;
-        bulletSize = 3;
-        duration = 150;
-        break;
-      case TowerType.MAGE:
-        bulletColor = 0x9b59b6;
-        bulletSize = 7;
-        duration = 300;
-        break;
-      default:
-        bulletColor = 0xff0000;
-        bulletSize = 5;
-        duration = 200;
-    }
+    const bulletConfig = TOWERS[this.towerType].bullet;
+    const bulletColor = bulletConfig.color;
+    const bulletSize = bulletConfig.size;
+    const duration = bulletConfig.duration;
     
     bullet.fillStyle(bulletColor, 1);
     bullet.fillCircle(0, 0, bulletSize);

@@ -1,17 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY_COLOR } from '../config';
-
-export enum EnemyType {
-  SCOUT_MOUSE = 'scout',
-  SOLDIER_MOUSE = 'soldier',
-  ARMORED_MOUSE = 'armored'
-}
-
-interface EnemyStats {
-  health: number;
-  speed: number;
-  reward: number;
-}
+import { ENEMIES, EnemyType } from '../config/enemyConfig';
 
 export class Enemy extends Phaser.GameObjects.Container {
   private enemySprite: Phaser.GameObjects.Arc;
@@ -32,34 +20,14 @@ export class Enemy extends Phaser.GameObjects.Container {
     super(scene, vec.x, vec.y);
     
     this.enemyType = enemyType;
-    const stats = this.getEnemyStats(enemyType);
-    this.health = stats.health;
-    this.maxHealth = stats.health;
-    this.speed = stats.speed;
-    this.reward = stats.reward;
+    const config = ENEMIES[enemyType];
     
-    let radius = 15;
-    let color = ENEMY_COLOR;
+    this.health = config.health;
+    this.maxHealth = config.health;
+    this.speed = config.speed;
+    this.reward = config.reward;
     
-    switch (enemyType) {
-      case EnemyType.SCOUT_MOUSE:
-        radius = 12;
-        color = 0xe74c3c;
-        break;
-      case EnemyType.SOLDIER_MOUSE:
-        radius = 15;
-        color = 0xf39c12;
-        break;
-      case EnemyType.ARMORED_MOUSE:
-        radius = 18;
-        color = 0x7f8c8d;
-        break;
-      default:
-        radius = 15;
-        color = ENEMY_COLOR;
-    }
-    
-    this.enemySprite = new Phaser.GameObjects.Arc(scene, 0, 0, radius, 0, 360, false, color);
+    this.enemySprite = new Phaser.GameObjects.Arc(scene, 0, 0, config.radius, 0, 360, false, config.color);
     this.add(this.enemySprite);
     
     this.path = path;
@@ -72,34 +40,6 @@ export class Enemy extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
   
-  private getEnemyStats(type: EnemyType): EnemyStats {
-    switch (type) {
-      case EnemyType.SCOUT_MOUSE:
-        return {
-          health: 50,
-          speed: 0.0015,
-          reward: 10
-        };
-      case EnemyType.SOLDIER_MOUSE:
-        return {
-          health: 100,
-          speed: 0.001,
-          reward: 20
-        };
-      case EnemyType.ARMORED_MOUSE:
-        return {
-          health: 200,
-          speed: 0.0007,
-          reward: 30
-        };
-      default:
-        return {
-          health: 100,
-          speed: 0.001,
-          reward: 20
-        };
-    }
-  }
   
   update() {
     this.follower.t += this.speed;
@@ -138,22 +78,7 @@ export class Enemy extends Phaser.GameObjects.Container {
   private updateHealthBar() {
     this.healthBar.clear();
     
-    let radius = 15;
-    
-    switch (this.enemyType) {
-      case EnemyType.SCOUT_MOUSE:
-        radius = 12;
-        break;
-      case EnemyType.SOLDIER_MOUSE:
-        radius = 15;
-        break;
-      case EnemyType.ARMORED_MOUSE:
-        radius = 18;
-        break;
-      default:
-        radius = 15;
-    }
-    
+    const radius = ENEMIES[this.enemyType].radius;
     const width = 40;
     const height = 5;
     const x = -width / 2;
