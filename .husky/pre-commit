@@ -1,12 +1,9 @@
 #!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
-# Run ESLint
-echo "Running ESLint..."
-npm run lint:fix
-
-# Run Prettier
-echo "Running Prettier..."
-npm run format
+# Run lint-staged to lint and format only staged files
+echo "Running lint-staged..."
+npx lint-staged
 
 # If everything passes, allow the commit
 exit 0

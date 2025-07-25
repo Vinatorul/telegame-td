@@ -20,7 +20,7 @@ export class TowerSelector {
     this.scene = scene;
     this.tileMap = tileMap;
     this.buttons = this.createButtons();
-    
+
     const gameWidth = this.scene.scale.width;
     this.disabledOverlay = this.scene.add.rectangle(
       0,
@@ -32,7 +32,7 @@ export class TowerSelector {
     );
     this.disabledOverlay.setOrigin(0, 0);
     this.buttons.add(this.disabledOverlay);
-    
+
     this.setEnabled(false);
   }
 
@@ -85,15 +85,15 @@ export class TowerSelector {
     button.setInteractive();
     button.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (!this.enabled) return;
-      
+
       this.selectTowerType(towerType);
-      
+
       const gameScene = this.scene as any;
       if (gameScene.selectedTile && gameScene.gold >= this.towerCosts[towerType]) {
         const { gridX, gridY } = gameScene.selectedTile;
         gameScene.placeTower(gridX, gridY, towerType);
       }
-      
+
       pointer.event.stopPropagation();
     });
     container.add(button);
@@ -144,11 +144,11 @@ export class TowerSelector {
       this.buttons.destroy();
     }
   }
-  
+
   public setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     this.disabledOverlay.setVisible(!enabled);
-    
+
     Object.values(this.towerButtons).forEach(button => {
       button.disableInteractive();
       if (enabled) {

@@ -125,7 +125,7 @@ export class Tower extends Phaser.GameObjects.Container {
 
     const nextLevel = this.level + 1;
     const upgradeCost = TOWERS[this.towerType].levels[nextLevel].upgradeCost || 0;
-    
+
     const gameScene = this.scene as any;
     if (gameScene.gold >= upgradeCost) {
       gameScene.gold -= upgradeCost;
@@ -133,7 +133,7 @@ export class Tower extends Phaser.GameObjects.Container {
       this.upgrade();
       return true;
     }
-    
+
     return false;
   }
 
@@ -151,10 +151,10 @@ export class Tower extends Phaser.GameObjects.Container {
     this.towerSprite.fillColor = config.color;
 
     this.drawRange(this.showRange);
-    
+
     this.upgradeButton.removeAll(true);
     this.createUpgradeButton();
-    
+
     return true;
   }
 
