@@ -187,4 +187,61 @@ describe('TouchManager', () => {
     const touchData = touchManager['activeTouches'].get(mockPointer.id);
     expect(touchData.control).toBe('towerSelector');
   });
+
+  test('should handle multiple touch points simultaneously', () => {
+    const zones: TouchZones = {
+      gameField: new Phaser.Geom.Rectangle(0, 0, 800, 600),
+      towerSelector: new Phaser.Geom.Rectangle(50, 700, 200, 100)
+    };
+    touchManager.setTouchZones(zones);
+
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 150 };
+    const pointer2 = { ...mockPointer, id: 2, x: 300, y: 250 };
+    const pointer3 = { ...mockPointer, id: 3, x: 75, y: 750 };
+
+    const handleTouchStart = touchManager['handleTouchStart'].bind(touchManager);
+
+    handleTouchStart(pointer1);
+    handleTouchStart(pointer2);
+    handleTouchStart(pointer3);
+
+    expect(touchManager['activeTouches'].size).toBe(3);
+    expect(touchManager['activeTouches'].has(1)).toBe(true);
+    expect(touchManager['activeTouches'].has(2)).toBe(true);
+    expect(touchManager['activeTouches'].has(3)).toBe(true);
+
+    expect(touchManager['activeTouches'].get(1).control).toBe('gameField');
+    expect(touchManager['activeTouches'].get(2).control).toBe('gameField');
+    expect(touchManager['activeTouches'].get(3).control).toBe('towerSelector');
+
+    const handleTouchMove = touchManager['handleTouchMove'].bind(touchManager);
+    const movedPointer1 = { ...pointer1, x: 150, y: 200 };
+    handleTouchMove(movedPointer1);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_START,
+      expect.objectContaining({
+        id: 1,
+        x: 150,
+        y: 200
+      })
+    );
+
+    const handleTouchEnd = touchManager['handleTouchEnd'].bind(touchManager);
+    handleTouchEnd(pointer2);
+
+    expect(touchManager['activeTouches'].size).toBe(2);
+    expect(touchManager['activeTouches'].has(1)).toBe(true);
+    expect(touchManager['activeTouches'].has(2)).toBe(false);
+    expect(touchManager['activeTouches'].has(3)).toBe(true);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.TAP,
+      expect.objectContaining({
+        id: 2,
+        x: 300,
+        y: 250
+      })
+    );
+  });
 });

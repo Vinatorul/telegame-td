@@ -1,4 +1,10 @@
 import { test } from '@playwright/test';
+
+declare global {
+  interface Window {
+    game: any;
+  }
+}
 import {
   waitForGameLoad,
   captureGameState,
@@ -42,7 +48,99 @@ test.describe('Touch Interaction', () => {
     ]);
 
     await page.waitForTimeout(500);
+    await captureGameState(page);
 
+    await page
+      .evaluate(() => {
+        const touchDebugText = document.querySelector('text');
+        return touchDebugText ? touchDebugText.textContent : null;
+      })
+      .then(text => {
+        console.log('Touch debug text:', text);
+      });
+
+    await simulateMultiTouch(page, [
+      { startX: 150, startY: 150, endX: 250, endY: 250 },
+      { startX: 300, startY: 300, endX: 200, endY: 200 },
+      { startX: 400, startY: 150, endX: 400, endY: 250 }
+    ]);
+
+    await page.waitForTimeout(500);
+    await captureGameState(page);
+
+    await page
+      .evaluate(() => {
+        const touchDebugText = document.querySelector('text');
+        return touchDebugText ? touchDebugText.textContent : null;
+      })
+      .then(text => {
+        console.log('Touch debug text after second multi-touch:', text);
+      });
+  });
+
+  test('should track multiple touch points simultaneously', async ({ page }) => {
+    await page.goto('/');
+    await waitForGameLoad(page);
+
+    await simulateTouchStart(page, 100, 100);
+    await page.waitForTimeout(100);
+
+    await simulateTouchStart(page, 200, 200);
+    await page.waitForTimeout(100);
+
+    await simulateTouchStart(page, 300, 300);
+    await page.waitForTimeout(500);
+
+    await captureGameState(page);
+
+    await simulateTouchEnd(page, 100, 100);
+    await simulateTouchEnd(page, 200, 200);
+    await simulateTouchEnd(page, 300, 300);
+
+    await page.waitForTimeout(500);
+  });
+
+  test('should handle pinch-to-zoom gesture', async ({ page }) => {
+    await page.goto('/');
+    await waitForGameLoad(page);
+
+    const centerX = 200;
+    const centerY = 200;
+    const distance = 50;
+
+    await simulateMultiTouch(page, [
+      {
+        startX: centerX - distance,
+        startY: centerY - distance,
+        endX: centerX - distance * 2,
+        endY: centerY - distance * 2
+      },
+      {
+        startX: centerX + distance,
+        startY: centerY + distance,
+        endX: centerX + distance * 2,
+        endY: centerY + distance * 2
+      }
+    ]);
+
+    await page.waitForTimeout(500);
+    await captureGameState(page);
+  });
+
+  test('should handle rotation gesture', async ({ page }) => {
+    await page.goto('/');
+    await waitForGameLoad(page);
+
+    const centerX = 200;
+    const centerY = 200;
+    const radius = 50;
+
+    await simulateMultiTouch(page, [
+      { startX: centerX - radius, startY: centerY, endX: centerX, endY: centerY - radius },
+      { startX: centerX + radius, startY: centerY, endX: centerX, endY: centerY + radius }
+    ]);
+
+    await page.waitForTimeout(500);
     await captureGameState(page);
   });
 

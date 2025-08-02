@@ -82,7 +82,20 @@ export async function simulateMultiTouch(
   touches: Array<{ startX: number; startY: number; endX: number; endY: number }>
 ) {
   for (const touch of touches) {
-    await page.mouse.click(touch.startX, touch.startY);
-    await page.waitForTimeout(100);
+    await simulateTouchStart(page, touch.startX, touch.startY);
   }
+
+  await page.waitForTimeout(300);
+
+  for (const touch of touches) {
+    await simulateTouchMove(page, touch.endX, touch.endY);
+  }
+
+  await page.waitForTimeout(300);
+
+  for (const touch of touches) {
+    await simulateTouchEnd(page, touch.endX, touch.endY);
+  }
+
+  await page.waitForTimeout(300);
 }

@@ -160,7 +160,12 @@ export class GameScene extends Phaser.Scene {
     this.touchManager = new TouchManager(this, true);
 
     const touchZones: TouchZones = {
-      gameField: new Phaser.Geom.Rectangle(0, 0, this.gameArea.width, this.gameArea.height)
+      gameField: new Phaser.Geom.Rectangle(
+        this.gameFieldContainer.x,
+        this.gameFieldContainer.y,
+        this.gameArea.width,
+        this.gameArea.height
+      )
     };
 
     if (this.towerSelector) {
@@ -172,6 +177,8 @@ export class GameScene extends Phaser.Scene {
         80
       );
     }
+
+    console.log('Touch zones:', touchZones);
 
     this.touchManager.setTouchZones(touchZones);
 
@@ -220,6 +227,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleTouchTap(data: any) {
+    console.log('Touch tap event:', data);
+
     if (data.control === 'gameField') {
       const towerSelectorHeight = 100;
       const visibleHeight = this.gameHeight - towerSelectorHeight;
@@ -228,7 +237,10 @@ export class GameScene extends Phaser.Scene {
         const fieldX = data.x - this.gameFieldContainer.x;
         const fieldY = data.y - this.gameFieldContainer.y;
 
+        console.log('Field coordinates:', { fieldX, fieldY });
+
         const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
+        console.log('Grid coordinates:', { gridX, gridY });
 
         if (this.tileMap.canPlaceTower(gridX, gridY)) {
           this.selectTile(gridX, gridY);

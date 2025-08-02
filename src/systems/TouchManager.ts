@@ -69,6 +69,14 @@ export default class TouchManager {
   }
 
   handleTouchStart(pointer: Phaser.Input.Pointer) {
+    console.log('Touch start:', {
+      id: pointer.id,
+      x: pointer.x,
+      y: pointer.y,
+      isDown: pointer.isDown,
+      active: pointer.active
+    });
+
     this.activeTouches.set(pointer.id, {
       x: pointer.x,
       y: pointer.y,
