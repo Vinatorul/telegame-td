@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { Tower, Enemy, EnemyType, TowerType } from '../objects';
 import { BG_COLOR, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
-import { TileMap } from '../systems';
+import { TileMap, TouchManager, TouchEvents, TouchZones } from '../systems';
 import { TowerSelector } from '../ui';
 
 export class GameScene extends Phaser.Scene {
@@ -20,6 +20,7 @@ export class GameScene extends Phaser.Scene {
   private towerSelector: TowerSelector;
   private background: Phaser.GameObjects.Rectangle;
   private selectedTileMarker: Phaser.GameObjects.Graphics;
+  private touchManager: TouchManager;
 
   public gold = 200;
   private lives = 20;
@@ -61,6 +62,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.setupInputHandlers();
+    this.setupTouchManager();
 
     this.nextWave = this.time.addEvent({
       delay: 10000,
@@ -154,6 +156,91 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  private setupTouchManager() {
+    this.touchManager = new TouchManager(this, true);
+
+    const touchZones: TouchZones = {
+      gameField: new Phaser.Geom.Rectangle(0, 0, this.gameArea.width, this.gameArea.height)
+    };
+
+    if (this.towerSelector) {
+      const gameHeight = this.scale.height;
+      touchZones.towerSelector = new Phaser.Geom.Rectangle(
+        UI_PADDING,
+        gameHeight - 90,
+        this.scale.width - UI_PADDING * 2,
+        80
+      );
+    }
+
+    this.touchManager.setTouchZones(touchZones);
+
+    this.events.on(TouchEvents.DRAG_START, this.handleTouchDragStart, this);
+    this.events.on(TouchEvents.DRAG_MOVE, this.handleTouchDragMove, this);
+    this.events.on(TouchEvents.DRAG_END, this.handleTouchDragEnd, this);
+    this.events.on(TouchEvents.TAP, this.handleTouchTap, this);
+    this.events.on(TouchEvents.LONG_PRESS, this.handleTouchLongPress, this);
+  }
+
+  private handleTouchDragStart(data: any) {
+    if (data.control === 'gameField') {
+      this.isDragging = true;
+      this.dragStartX = data.x;
+      this.dragStartY = data.y;
+      this.deselectAllTowers();
+    }
+  }
+
+  private handleTouchDragMove(data: any) {
+    if (data.control === 'gameField' && this.isDragging) {
+      const dx = data.deltaX;
+      const dy = data.deltaY;
+
+      const newX = this.gameFieldContainer.x + dx;
+      const newY = this.gameFieldContainer.y + dy;
+
+      const towerSelectorHeight = 100;
+      const visibleHeight = this.gameHeight - towerSelectorHeight;
+      const visibleWidth = this.gameWidth;
+
+      const minX = Math.min(0, visibleWidth - this.gameArea.width);
+      const minY = Math.min(0, visibleHeight - this.gameArea.height);
+      const maxX = 0;
+      const maxY = 0;
+
+      this.gameFieldContainer.x = Phaser.Math.Clamp(newX, minX, maxX);
+      this.gameFieldContainer.y = Phaser.Math.Clamp(newY, minY, maxY);
+    }
+  }
+
+  private handleTouchDragEnd(data: any) {
+    if (data.control === 'gameField') {
+      this.isDragging = false;
+    }
+  }
+
+  private handleTouchTap(data: any) {
+    if (data.control === 'gameField') {
+      const towerSelectorHeight = 100;
+      const visibleHeight = this.gameHeight - towerSelectorHeight;
+
+      if (data.y < visibleHeight) {
+        const fieldX = data.x - this.gameFieldContainer.x;
+        const fieldY = data.y - this.gameFieldContainer.y;
+
+        const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
+
+        if (this.tileMap.canPlaceTower(gridX, gridY)) {
+          this.selectTile(gridX, gridY);
+        } else {
+          this.clearSelectedTile();
+        }
+      }
+    }
+  }
+
+  private handleTouchLongPress(_data: any) {}
+
   update(time: number) {
     this.enemies.getChildren().forEach((enemy: any) => {
       enemy.update();
@@ -172,6 +259,10 @@ export class GameScene extends Phaser.Scene {
     this.towers.getChildren().forEach((tower: any) => {
       tower.update(time, this.enemies);
     });
+
+    if (this.touchManager) {
+      this.touchManager.update();
+    }
   }
 
   private deselectAllTowers() {
@@ -381,6 +472,10 @@ export class GameScene extends Phaser.Scene {
 
     if (this.uiContainer) {
       this.uiContainer.destroy();
+    }
+
+    if (this.touchManager) {
+      this.touchManager.destroy();
     }
 
     this.setupLayout();
