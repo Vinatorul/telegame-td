@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 export interface TouchZones {
   gameField?: Phaser.Geom.Rectangle;
@@ -62,6 +62,13 @@ export default class TouchManager {
     this.scene.input.on('pointermove', this.handleTouchMove, this);
     this.scene.input.on('pointerup', this.handleTouchEnd, this);
     this.scene.input.on('pointerupoutside', this.handleTouchEnd, this);
+
+    if (typeof window !== 'undefined') {
+      const canvas = this.scene.game.canvas;
+      canvas.addEventListener('multi-touch-simulated', () => {
+        console.log('Multi-touch simulation detected');
+      });
+    }
   }
 
   setTouchZones(zones: TouchZones) {
@@ -196,12 +203,67 @@ export default class TouchManager {
   }
 
   update() {
-    const _currentTime = this.scene.time.now;
+    const currentTime = this.scene.time.now;
     const frameTouches = new Set();
+    const activePointers = this.scene.input.manager.pointers.filter(p => p.isDown);
 
-    this.scene.input.manager.pointers.forEach(pointer => {
-      if (pointer.isDown) {
-        frameTouches.add(pointer.id);
+    if (this.debugEnabled && activePointers.length > 1) {
+      console.log(`Active pointers: ${activePointers.length}`);
+    }
+
+    activePointers.forEach(pointer => {
+      frameTouches.add(pointer.id);
+
+      if (this.activeTouches.has(pointer.id)) {
+        const touchData = this.activeTouches.get(pointer.id);
+
+        const prevX = touchData.x;
+        const prevY = touchData.y;
+        touchData.x = pointer.x;
+        touchData.y = pointer.y;
+
+        if (!touchData.isDragging) {
+          const distance = Phaser.Math.Distance.Between(
+            touchData.startX,
+            touchData.startY,
+            pointer.x,
+            pointer.y
+          );
+
+          if (distance > this.dragThreshold) {
+            touchData.isDragging = true;
+
+            this.scene.events.emit(TouchEvents.DRAG_START, {
+              id: pointer.id,
+              x: pointer.x,
+              y: pointer.y,
+              startX: touchData.startX,
+              startY: touchData.startY,
+              control: touchData.control
+            });
+          }
+        } else if (prevX !== pointer.x || prevY !== pointer.y) {
+          this.scene.events.emit(TouchEvents.DRAG_MOVE, {
+            id: pointer.id,
+            x: pointer.x,
+            y: pointer.y,
+            deltaX: pointer.x - prevX,
+            deltaY: pointer.y - prevY,
+            control: touchData.control
+          });
+        }
+
+        this.updateControlsFromTouch(pointer.id, pointer.x, pointer.y);
+      } else {
+        this.activeTouches.set(pointer.id, {
+          x: pointer.x,
+          y: pointer.y,
+          startX: pointer.x,
+          startY: pointer.y,
+          startTime: currentTime
+        });
+
+        this.updateControlsFromTouch(pointer.id, pointer.x, pointer.y);
       }
     });
 
@@ -245,22 +307,42 @@ export default class TouchManager {
       });
     }
 
-    this.debugGraphics.lineStyle(2, 0xff0000, 1);
+    const activePointers = this.scene.input.manager.pointers.filter(p => p.isDown);
+    const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xff00ff, 0xffff00];
 
-    this.activeTouches.forEach((touchData, _id) => {
-      this.debugGraphics.fillStyle(0xff0000, 0.5);
-      this.debugGraphics.fillCircle(touchData.x, touchData.y, 20);
+    this.activeTouches.forEach((touchData, id) => {
+      const colorIndex = id % colors.length;
+      const touchColor = colors[colorIndex];
 
-      this.debugGraphics.lineStyle(2, 0x00ff00, 1);
+      this.debugGraphics.fillStyle(touchColor, 0.5);
+      this.debugGraphics.fillCircle(touchData.x, touchData.y, 30);
+
+      this.debugGraphics.lineStyle(2, touchColor, 1);
       this.debugGraphics.lineBetween(touchData.startX, touchData.startY, touchData.x, touchData.y);
+
+      this.debugGraphics.fillStyle(0xffffff, 1);
+      this.debugGraphics.fillCircle(touchData.x, touchData.y, 15);
+
+      const idText = this.scene.add.text(touchData.x - 4, touchData.y - 6, id.toString(), {
+        fontSize: '16px',
+        color: '#000000'
+      });
+      idText.setDepth(1001);
+
+      this.scene.time.delayedCall(100, () => {
+        idText.destroy();
+      });
     });
 
-    const touchInfo = Array.from(this.activeTouches.entries()).map(
-      ([_id, data]) =>
-        `Touch ${_id}: (${Math.floor(data.x)},${Math.floor(data.y)}) ${data.control || 'none'}`
-    );
+    const touchInfo = Array.from(this.activeTouches.entries()).map(([id, data]) => {
+      const duration = this.scene.time.now - data.startTime;
+      return `Touch ${id}: (${Math.floor(data.x)},${Math.floor(data.y)}) ${data.control || 'none'} ${data.isDragging ? 'DRAG' : ''} ${duration}ms`;
+    });
 
-    this.debugText.setText(['Touch Debug:', ...touchInfo]);
+    this.debugText.setText([
+      `Touch Debug: ${this.activeTouches.size} active, ${activePointers.length} pointers`,
+      ...touchInfo
+    ]);
   }
 
   destroy() {

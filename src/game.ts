@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { GameConfig, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
 import { scenes } from './scenes';
 

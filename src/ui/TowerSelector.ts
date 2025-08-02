@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { TowerType } from '../objects';
 import { TileMap } from '../systems';
 import { UI_PADDING } from '../config';

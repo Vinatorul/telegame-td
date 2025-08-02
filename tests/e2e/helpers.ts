@@ -88,7 +88,15 @@ export async function simulateMultiTouch(
   await page.waitForTimeout(300);
 
   for (const touch of touches) {
-    await simulateTouchMove(page, touch.endX, touch.endY);
+    const steps = 5;
+    const xStep = (touch.endX - touch.startX) / steps;
+    const yStep = (touch.endY - touch.startY) / steps;
+
+    for (let step = 1; step <= steps; step++) {
+      const x = touch.startX + xStep * step;
+      const y = touch.startY + yStep * step;
+      await simulateTouchMove(page, x, y);
+    }
   }
 
   await page.waitForTimeout(300);
@@ -98,4 +106,15 @@ export async function simulateMultiTouch(
   }
 
   await page.waitForTimeout(300);
+
+  await page.evaluate(() => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const event = new CustomEvent('multi-touch-simulated', {
+        bubbles: true,
+        detail: { simulated: true }
+      });
+      canvas.dispatchEvent(event);
+    }
+  });
 }

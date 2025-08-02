@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { TOWERS, TowerType, TowerLevel } from '../config/towerConfig';
 
 export class Tower extends Phaser.GameObjects.Container {

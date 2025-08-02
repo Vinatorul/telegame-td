@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { Tower, Enemy, EnemyType, TowerType } from '../objects';
 import { BG_COLOR, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
 import { TileMap, TouchManager, TouchEvents, TouchZones } from '../systems';

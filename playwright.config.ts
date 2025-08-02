@@ -17,7 +17,8 @@ export default defineConfig({
     baseURL: 'http://localhost:1234',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'on-first-retry'
+    video: 'on-first-retry',
+    hasTouch: true
   },
   projects: [
     {

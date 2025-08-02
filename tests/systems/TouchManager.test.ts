@@ -48,7 +48,8 @@ describe('TouchManager', () => {
         emit: jest.fn()
       },
       time: {
-        now: 1000
+        now: 1000,
+        delayedCall: jest.fn()
       }
     };
 
@@ -243,5 +244,119 @@ describe('TouchManager', () => {
         y: 250
       })
     );
+  });
+
+  test('should update multiple active pointers correctly', () => {
+    const zones: TouchZones = {
+      gameField: new Phaser.Geom.Rectangle(0, 0, 800, 600)
+    };
+    touchManager.setTouchZones(zones);
+
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 150, isDown: true };
+    const pointer2 = { ...mockPointer, id: 2, x: 200, y: 250, isDown: true };
+
+    mockScene.input.manager.pointers = [pointer1, pointer2];
+
+    touchManager.update();
+
+    expect(touchManager['activeTouches'].size).toBe(2);
+    expect(touchManager['activeTouches'].has(1)).toBe(true);
+    expect(touchManager['activeTouches'].has(2)).toBe(true);
+
+    const updatedPointer1 = { ...pointer1, x: 120, y: 170, isDown: true };
+    const updatedPointer2 = { ...pointer2, x: 220, y: 270, isDown: true };
+
+    mockScene.input.manager.pointers = [updatedPointer1, updatedPointer2];
+
+    touchManager.update();
+
+    expect(touchManager['activeTouches'].get(1).x).toBe(120);
+    expect(touchManager['activeTouches'].get(1).y).toBe(170);
+    expect(touchManager['activeTouches'].get(2).x).toBe(220);
+    expect(touchManager['activeTouches'].get(2).y).toBe(270);
+  });
+
+  test('should handle simultaneous drag operations', () => {
+    const zones: TouchZones = {
+      gameField: new Phaser.Geom.Rectangle(0, 0, 800, 600)
+    };
+    touchManager.setTouchZones(zones);
+
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 150 };
+    const pointer2 = { ...mockPointer, id: 2, x: 200, y: 250 };
+
+    const handleTouchStart = touchManager['handleTouchStart'].bind(touchManager);
+    handleTouchStart(pointer1);
+    handleTouchStart(pointer2);
+
+    const handleTouchMove = touchManager['handleTouchMove'].bind(touchManager);
+
+    const movedPointer1 = { ...pointer1, x: 150, y: 200 };
+    const movedPointer2 = { ...pointer2, x: 250, y: 300 };
+
+    handleTouchMove(movedPointer1);
+    handleTouchMove(movedPointer2);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_START,
+      expect.objectContaining({
+        id: 1,
+        x: 150,
+        y: 200
+      })
+    );
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_START,
+      expect.objectContaining({
+        id: 2,
+        x: 250,
+        y: 300
+      })
+    );
+
+    const furtherMovedPointer1 = { ...movedPointer1, x: 160, y: 210 };
+    const furtherMovedPointer2 = { ...movedPointer2, x: 260, y: 310 };
+
+    handleTouchMove(furtherMovedPointer1);
+    handleTouchMove(furtherMovedPointer2);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_MOVE,
+      expect.objectContaining({
+        id: 1,
+        x: 160,
+        y: 210,
+        deltaX: expect.any(Number),
+        deltaY: expect.any(Number)
+      })
+    );
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_MOVE,
+      expect.objectContaining({
+        id: 2,
+        x: 260,
+        y: 310,
+        deltaX: expect.any(Number),
+        deltaY: expect.any(Number)
+      })
+    );
+  });
+
+  test('should clean up all touches when pointers are released', () => {
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 150 };
+    const pointer2 = { ...mockPointer, id: 2, x: 200, y: 250 };
+
+    const handleTouchStart = touchManager['handleTouchStart'].bind(touchManager);
+    handleTouchStart(pointer1);
+    handleTouchStart(pointer2);
+
+    expect(touchManager['activeTouches'].size).toBe(2);
+
+    mockScene.input.manager.pointers = [];
+    touchManager.update();
+
+    expect(touchManager['activeTouches'].size).toBe(0);
   });
 });
