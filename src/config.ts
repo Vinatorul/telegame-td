@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 export const DEFAULT_WIDTH = 422;
 export const DEFAULT_HEIGHT = 625;
@@ -24,6 +24,12 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT
+  },
+  input: {
+    activePointers: 5,
+    touch: {
+      capture: true
+    }
   },
   pixelArt: true
 };

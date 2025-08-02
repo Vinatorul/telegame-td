@@ -3,9 +3,15 @@
   "version": "0.1.0",
   "description": "Tower Defense game for Telegram Game Platform",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "browser": {
+    "phaser": "./node_modules/phaser/dist/phaser.js"
+  },
   "scripts": {
     "start": "parcel src/index.html --open",
-    "build": "parcel build src/index.html --public-url ./",
+    "build": "parcel build src/index.html --public-url .",
     "deploy": "./deploy-gh-pages.sh",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "lint:fix": "eslint 'src/**/*.{js,ts}' --fix",
@@ -44,6 +50,7 @@
     "jest": "^30.0.5",
     "lint-staged": "^16.1.2",
     "parcel": "^2.15.4",
+    "parcel-resolver-typescript-module": "^0.1.9",
     "prettier": "^3.6.2",
     "process": "^0.11.10",
     "ts-jest": "^29.4.0",

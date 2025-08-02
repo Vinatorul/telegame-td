@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { ENEMIES, EnemyType } from '../config/enemyConfig';
 
 export class Enemy extends Phaser.GameObjects.Container {
