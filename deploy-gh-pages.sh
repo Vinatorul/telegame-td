@@ -30,7 +30,7 @@ cp dist/index.html "$TEMP_DIR/" || {
   exit 1
 }
 
-JS_FILE=$(grep -o 'src=[^ ]*telegame-td\.[^ ]*\.js' dist/index.html | cut -d= -f2)
+JS_FILE=$(grep -o 'src=[^ ]*telegame-td\.[^ ]*\.js' dist/index.html | cut -d= -f2 | tr -d '"')
 if [ -z "$JS_FILE" ]; then
   echo "Error: Could not find local JS file reference in index.html"
   exit 1

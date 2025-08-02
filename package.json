@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "parcel src/index.html --open",
-    "build": "parcel build src/index.html --public-url ./",
+    "build": "parcel build src/index.html --public-url .",
     "deploy": "./deploy-gh-pages.sh",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "lint:fix": "eslint 'src/**/*.{js,ts}' --fix",
