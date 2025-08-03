@@ -246,6 +246,65 @@ describe('TouchManager', () => {
     );
   });
 
+  test('should detect pinch gesture with two touch points', () => {
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 100, isDown: true };
+    const pointer2 = { ...mockPointer, id: 2, x: 200, y: 200, isDown: true };
+
+    const handleTouchStart = touchManager['handleTouchStart'].bind(touchManager);
+    handleTouchStart(pointer1);
+    handleTouchStart(pointer2);
+
+    expect(touchManager['activeTouches'].size).toBe(2);
+    expect(touchManager['activeTouches'].has(1)).toBe(true);
+    expect(touchManager['activeTouches'].has(2)).toBe(true);
+
+    mockScene.input.manager.pointers = [pointer1, pointer2];
+    touchManager.update();
+
+    const handlePinchGesture = touchManager['handlePinchGesture'].bind(touchManager);
+    handlePinchGesture([pointer1, pointer2]);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_START,
+      expect.objectContaining({
+        center: expect.any(Object),
+        distance: expect.any(Number),
+        pointers: expect.arrayContaining([1, 2])
+      })
+    );
+
+    const movedPointer1 = { ...pointer1, x: 50, y: 50, isDown: true };
+    const movedPointer2 = { ...pointer2, x: 250, y: 250, isDown: true };
+
+    touchManager['activeTouches'].get(1).previousPinchDistance = 141.4; // Approximate distance between (100,100) and (200,200)
+    touchManager['activeTouches'].get(2).previousPinchDistance = 141.4;
+
+    handlePinchGesture([movedPointer1, movedPointer2]);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_MOVE,
+      expect.objectContaining({
+        center: expect.any(Object),
+        distance: expect.any(Number),
+        previousDistance: expect.any(Number),
+        scaleFactor: expect.any(Number)
+      })
+    );
+
+    const handleTouchEnd = touchManager['handleTouchEnd'].bind(touchManager);
+    handleTouchEnd(movedPointer1);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_END,
+      expect.objectContaining({
+        id: 1,
+        x: 50,
+        y: 50,
+        otherPointerId: expect.any(Number)
+      })
+    );
+  });
+
   test('should update multiple active pointers correctly', () => {
     const zones: TouchZones = {
       gameField: new Phaser.Geom.Rectangle(0, 0, 800, 600)
