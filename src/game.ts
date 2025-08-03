@@ -1,15 +1,9 @@
 import * as Phaser from 'phaser';
 import { GameConfig, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
 import { scenes } from './scenes';
+import { isTelegramWebApp } from './utils/environment';
 
 let game: Phaser.Game;
-
-export const isTelegramWebApp =
-  typeof window !== 'undefined' &&
-  window.Telegram &&
-  window.Telegram.WebApp &&
-  window.Telegram.WebApp.initData &&
-  window.Telegram.WebApp.initData.length > 0;
 
 window.addEventListener('load', () => {
   console.log('Window loaded, initializing game...');
