@@ -418,4 +418,71 @@ describe('TouchManager', () => {
 
     expect(touchManager['activeTouches'].size).toBe(0);
   });
+
+  test('should handle transition from drag to pinch gesture', () => {
+    const zones: TouchZones = {
+      gameField: new Phaser.Geom.Rectangle(0, 0, 800, 600)
+    };
+    touchManager.setTouchZones(zones);
+
+    const pointer1 = { ...mockPointer, id: 1, x: 100, y: 150, isDown: true };
+    const handleTouchStart = touchManager['handleTouchStart'].bind(touchManager);
+    handleTouchStart(pointer1);
+
+    const movedPointer1 = { ...pointer1, x: 120, y: 170 };
+    const handleTouchMove = touchManager['handleTouchMove'].bind(touchManager);
+    handleTouchMove(movedPointer1);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.DRAG_START,
+      expect.objectContaining({
+        id: 1,
+        control: 'gameField'
+      })
+    );
+
+    const pointer2 = { ...mockPointer, id: 2, x: 200, y: 250, isDown: true };
+    handleTouchStart(pointer2);
+
+    mockScene.input.manager.pointers = [movedPointer1, pointer2];
+    touchManager.update();
+
+    const handlePinchGesture = touchManager['handlePinchGesture'].bind(touchManager);
+    handlePinchGesture([movedPointer1, pointer2]);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_START,
+      expect.objectContaining({
+        pointers: expect.arrayContaining([1, 2])
+      })
+    );
+
+    const furtherMovedPointer1 = { ...movedPointer1, x: 80, y: 130 };
+    const movedPointer2 = { ...pointer2, x: 220, y: 270 };
+
+    touchManager['activeTouches'].get(1).previousPinchDistance = Math.sqrt(
+      Math.pow(movedPointer1.x - pointer2.x, 2) + Math.pow(movedPointer1.y - pointer2.y, 2)
+    );
+    touchManager['activeTouches'].get(2).previousPinchDistance =
+      touchManager['activeTouches'].get(1).previousPinchDistance;
+
+    handlePinchGesture([furtherMovedPointer1, movedPointer2]);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_MOVE,
+      expect.objectContaining({
+        scaleFactor: expect.any(Number)
+      })
+    );
+
+    const handleTouchEnd = touchManager['handleTouchEnd'].bind(touchManager);
+    handleTouchEnd(furtherMovedPointer1);
+
+    expect(mockScene.events.emit).toHaveBeenCalledWith(
+      TouchEvents.PINCH_END,
+      expect.objectContaining({
+        id: 1
+      })
+    );
+  });
 });

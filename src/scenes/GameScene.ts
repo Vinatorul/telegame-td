@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
   private gameArea: { width: number; height: number };
   private gameFieldContainer: Phaser.GameObjects.Container;
   private isDragging = false;
+  private isPinching = false;
   private dragStartX = 0;
   private dragStartY = 0;
   private currentScale = 1;
@@ -201,7 +202,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleTouchDragStart(data: any) {
-    if (data.control === 'gameField') {
+    if (data.control === 'gameField' && !this.isPinching) {
       this.isDragging = true;
       this.dragStartX = data.x;
       this.dragStartY = data.y;
@@ -269,6 +270,12 @@ export class GameScene extends Phaser.Scene {
 
   private handlePinchStart(data: any) {
     console.log('Pinch start event received:', data);
+
+    this.isPinching = true;
+
+    if (this.isDragging) {
+      this.isDragging = false;
+    }
   }
 
   private handlePinchMove(data: any) {
@@ -322,6 +329,7 @@ export class GameScene extends Phaser.Scene {
 
   private handlePinchEnd(data: any) {
     console.log('Pinch end event received:', data);
+    this.isPinching = false;
   }
 
   private constrainGameField() {
