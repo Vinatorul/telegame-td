@@ -36,8 +36,14 @@ export class GameScene extends Phaser.Scene {
   private gameArea: { width: number; height: number };
   private gameFieldContainer: Phaser.GameObjects.Container;
   private isDragging = false;
+  private isPinching = false;
   private dragStartX = 0;
   private dragStartY = 0;
+  private currentScale = 1;
+  private minScale = 0.5;
+  private maxScale = 2;
+  private zoomInButton: Phaser.GameObjects.Text;
+  private zoomOutButton: Phaser.GameObjects.Text;
 
   constructor() {
     super('GameScene');
@@ -96,8 +102,11 @@ export class GameScene extends Phaser.Scene {
         const visibleHeight = this.gameHeight - towerSelectorHeight;
         const _visibleWidth = this.gameWidth;
 
-        const minX = Math.min(0, _visibleWidth - this.gameArea.width);
-        const minY = Math.min(0, visibleHeight - this.gameArea.height);
+        const scaledWidth = this.gameArea.width * this.currentScale;
+        const scaledHeight = this.gameArea.height * this.currentScale;
+
+        const minX = Math.min(0, _visibleWidth - scaledWidth);
+        const minY = Math.min(0, visibleHeight - scaledHeight);
         const maxX = 0;
         const maxY = 0;
 
@@ -107,8 +116,8 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (this.isPointerInGameArea(pointer)) {
-        const fieldX = pointer.x - this.gameFieldContainer.x;
-        const fieldY = pointer.y - this.gameFieldContainer.y;
+        const fieldX = (pointer.x - this.gameFieldContainer.x) / this.currentScale;
+        const fieldY = (pointer.y - this.gameFieldContainer.y) / this.currentScale;
 
         const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
 
@@ -135,8 +144,8 @@ export class GameScene extends Phaser.Scene {
         );
 
         if (distance < 10 && this.isPointerInGameArea(pointer)) {
-          const fieldX = pointer.x - this.gameFieldContainer.x;
-          const fieldY = pointer.y - this.gameFieldContainer.y;
+          const fieldX = (pointer.x - this.gameFieldContainer.x) / this.currentScale;
+          const fieldY = (pointer.y - this.gameFieldContainer.y) / this.currentScale;
 
           const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
 
@@ -187,10 +196,13 @@ export class GameScene extends Phaser.Scene {
     this.events.on(TouchEvents.DRAG_END, this.handleTouchDragEnd, this);
     this.events.on(TouchEvents.TAP, this.handleTouchTap, this);
     this.events.on(TouchEvents.LONG_PRESS, this.handleTouchLongPress, this);
+    this.events.on(TouchEvents.PINCH_START, this.handlePinchStart, this);
+    this.events.on(TouchEvents.PINCH_MOVE, this.handlePinchMove, this);
+    this.events.on(TouchEvents.PINCH_END, this.handlePinchEnd, this);
   }
 
   private handleTouchDragStart(data: any) {
-    if (data.control === 'gameField') {
+    if (data.control === 'gameField' && !this.isPinching) {
       this.isDragging = true;
       this.dragStartX = data.x;
       this.dragStartY = data.y;
@@ -210,8 +222,11 @@ export class GameScene extends Phaser.Scene {
       const visibleHeight = this.gameHeight - towerSelectorHeight;
       const visibleWidth = this.gameWidth;
 
-      const minX = Math.min(0, visibleWidth - this.gameArea.width);
-      const minY = Math.min(0, visibleHeight - this.gameArea.height);
+      const scaledWidth = this.gameArea.width * this.currentScale;
+      const scaledHeight = this.gameArea.height * this.currentScale;
+
+      const minX = Math.min(0, visibleWidth - scaledWidth);
+      const minY = Math.min(0, visibleHeight - scaledHeight);
       const maxX = 0;
       const maxY = 0;
 
@@ -234,8 +249,8 @@ export class GameScene extends Phaser.Scene {
       const visibleHeight = this.gameHeight - towerSelectorHeight;
 
       if (data.y < visibleHeight) {
-        const fieldX = data.x - this.gameFieldContainer.x;
-        const fieldY = data.y - this.gameFieldContainer.y;
+        const fieldX = (data.x - this.gameFieldContainer.x) / this.currentScale;
+        const fieldY = (data.y - this.gameFieldContainer.y) / this.currentScale;
 
         console.log('Field coordinates:', { fieldX, fieldY });
 
@@ -252,6 +267,87 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleTouchLongPress(_data: any) {}
+
+  private handlePinchStart(data: any) {
+    console.log('Pinch start event received:', data);
+
+    this.isPinching = true;
+
+    if (this.isDragging) {
+      this.isDragging = false;
+    }
+  }
+
+  private handlePinchMove(data: any) {
+    console.log('Pinch move event received:', data);
+
+    if (data.control === 'gameField' || !data.control) {
+      const newScale = Phaser.Math.Clamp(
+        this.currentScale * data.scaleFactor,
+        this.minScale,
+        this.maxScale
+      );
+
+      console.log(`Scaling from ${this.currentScale} to ${newScale}`);
+
+      const scaleFactor = newScale / this.currentScale;
+
+      if (scaleFactor !== 1) {
+        const centerX = data.center.x;
+        const centerY = data.center.y;
+
+        const worldCenterX = (centerX - this.gameFieldContainer.x) / this.currentScale;
+        const worldCenterY = (centerY - this.gameFieldContainer.y) / this.currentScale;
+
+        this.gameFieldContainer.scale = newScale;
+
+        const newWorldCenterX = worldCenterX * newScale;
+        const newWorldCenterY = worldCenterY * newScale;
+
+        const offsetX = newWorldCenterX - (centerX - this.gameFieldContainer.x);
+        const offsetY = newWorldCenterY - (centerY - this.gameFieldContainer.y);
+
+        this.gameFieldContainer.x -= offsetX;
+        this.gameFieldContainer.y -= offsetY;
+
+        this.currentScale = newScale;
+
+        this.constrainGameField();
+
+        if (typeof window !== 'undefined') {
+          console.log('Dispatching game-scale-changed event');
+          const canvas = this.game.canvas;
+          const event = new CustomEvent('game-scale-changed', {
+            bubbles: true,
+            detail: { scale: newScale }
+          });
+          canvas.dispatchEvent(event);
+        }
+      }
+    }
+  }
+
+  private handlePinchEnd(data: any) {
+    console.log('Pinch end event received:', data);
+    this.isPinching = false;
+  }
+
+  private constrainGameField() {
+    const towerSelectorHeight = 100;
+    const visibleHeight = this.gameHeight - towerSelectorHeight;
+    const visibleWidth = this.gameWidth;
+
+    const scaledWidth = this.gameArea.width * this.currentScale;
+    const scaledHeight = this.gameArea.height * this.currentScale;
+
+    const minX = Math.min(0, visibleWidth - scaledWidth);
+    const minY = Math.min(0, visibleHeight - scaledHeight);
+    const maxX = 0;
+    const maxY = 0;
+
+    this.gameFieldContainer.x = Phaser.Math.Clamp(this.gameFieldContainer.x, minX, maxX);
+    this.gameFieldContainer.y = Phaser.Math.Clamp(this.gameFieldContainer.y, minY, maxY);
+  }
 
   update(time: number) {
     this.enemies.getChildren().forEach((enemy: any) => {
@@ -298,6 +394,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     this.gameFieldContainer = this.add.container(0, 0);
+    this.gameFieldContainer.scale = this.currentScale;
 
     this.calculateGameArea();
 
@@ -384,6 +481,99 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.uiContainer.add([this.goldText, this.livesText, this.waveText]);
+
+    this.createZoomButtons();
+  }
+
+  private createZoomButtons() {
+    const buttonStyle = {
+      fontSize: '48px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+      backgroundColor: '#007700',
+      padding: {
+        x: 15,
+        y: 10
+      },
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 5,
+        fill: true
+      }
+    };
+
+    this.zoomInButton = this.add
+      .text(this.gameWidth - 80, 20, '+', buttonStyle)
+      .setInteractive()
+      .on('pointerdown', () => {
+        this.zoomIn();
+      });
+
+    this.zoomOutButton = this.add
+      .text(this.gameWidth - 80, 100, '-', buttonStyle)
+      .setInteractive()
+      .on('pointerdown', () => {
+        this.zoomOut();
+      });
+
+    this.zoomInButton.setDepth(1000);
+    this.zoomOutButton.setDepth(1000);
+
+    this.add.existing(this.zoomInButton);
+    this.add.existing(this.zoomOutButton);
+
+    console.log('Zoom buttons created at:', {
+      zoomIn: { x: this.zoomInButton.x, y: this.zoomInButton.y },
+      zoomOut: { x: this.zoomOutButton.x, y: this.zoomOutButton.y }
+    });
+  }
+
+  private zoomIn() {
+    const newScale = Phaser.Math.Clamp(this.currentScale * 1.2, this.minScale, this.maxScale);
+    this.setZoom(newScale);
+  }
+
+  private zoomOut() {
+    const newScale = Phaser.Math.Clamp(this.currentScale * 0.8, this.minScale, this.maxScale);
+    this.setZoom(newScale);
+  }
+
+  private setZoom(newScale: number) {
+    console.log(`Setting zoom: ${this.currentScale} -> ${newScale}`);
+
+    if (newScale !== this.currentScale) {
+      const centerX = this.gameWidth / 2;
+      const centerY = this.gameHeight / 2;
+
+      const worldCenterX = (centerX - this.gameFieldContainer.x) / this.currentScale;
+      const worldCenterY = (centerY - this.gameFieldContainer.y) / this.currentScale;
+
+      this.gameFieldContainer.scale = newScale;
+
+      const newWorldCenterX = worldCenterX * newScale;
+      const newWorldCenterY = worldCenterY * newScale;
+
+      const offsetX = newWorldCenterX - (centerX - this.gameFieldContainer.x);
+      const offsetY = newWorldCenterY - (centerY - this.gameFieldContainer.y);
+
+      this.gameFieldContainer.x -= offsetX;
+      this.gameFieldContainer.y -= offsetY;
+
+      this.currentScale = newScale;
+
+      this.constrainGameField();
+
+      if (typeof window !== 'undefined') {
+        const canvas = this.game.canvas;
+        const event = new CustomEvent('game-scale-changed', {
+          bubbles: true,
+          detail: { scale: newScale }
+        });
+        canvas.dispatchEvent(event);
+      }
+    }
   }
 
   private selectTile(gridX: number, gridY: number) {
@@ -486,8 +676,25 @@ export class GameScene extends Phaser.Scene {
       this.uiContainer.destroy();
     }
 
+    if (this.zoomInButton) {
+      this.zoomInButton.destroy();
+    }
+
+    if (this.zoomOutButton) {
+      this.zoomOutButton.destroy();
+    }
+
     if (this.touchManager) {
       this.touchManager.destroy();
+
+      this.events.off(TouchEvents.DRAG_START, this.handleTouchDragStart, this);
+      this.events.off(TouchEvents.DRAG_MOVE, this.handleTouchDragMove, this);
+      this.events.off(TouchEvents.DRAG_END, this.handleTouchDragEnd, this);
+      this.events.off(TouchEvents.TAP, this.handleTouchTap, this);
+      this.events.off(TouchEvents.LONG_PRESS, this.handleTouchLongPress, this);
+      this.events.off(TouchEvents.PINCH_START, this.handlePinchStart, this);
+      this.events.off(TouchEvents.PINCH_MOVE, this.handlePinchMove, this);
+      this.events.off(TouchEvents.PINCH_END, this.handlePinchEnd, this);
     }
 
     this.setupLayout();

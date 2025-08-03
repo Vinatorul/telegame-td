@@ -11,7 +11,10 @@ export enum TouchEvents {
   DRAG_MOVE = 'touchDragMove',
   DRAG_END = 'touchDragEnd',
   TAP = 'touchTap',
-  LONG_PRESS = 'touchLongPress'
+  LONG_PRESS = 'touchLongPress',
+  PINCH_START = 'touchPinchStart',
+  PINCH_MOVE = 'touchPinchMove',
+  PINCH_END = 'touchPinchEnd'
 }
 
 export default class TouchManager {
@@ -26,6 +29,7 @@ export default class TouchManager {
       startTime: number;
       control?: string;
       isDragging?: boolean;
+      previousPinchDistance?: number;
     }
   >;
 
@@ -149,7 +153,27 @@ export default class TouchManager {
         pointer.y
       );
 
-      if (touchData.isDragging) {
+      if (touchData.previousPinchDistance) {
+        let otherPointerId = null;
+        for (const [id, data] of this.activeTouches.entries()) {
+          if (id !== pointer.id && data.previousPinchDistance) {
+            otherPointerId = id;
+            break;
+          }
+        }
+
+        this.scene.events.emit(TouchEvents.PINCH_END, {
+          id: pointer.id,
+          x: pointer.x,
+          y: pointer.y,
+          otherPointerId: otherPointerId
+        });
+
+        if (otherPointerId && this.activeTouches.has(otherPointerId)) {
+          const otherTouch = this.activeTouches.get(otherPointerId);
+          delete otherTouch.previousPinchDistance;
+        }
+      } else if (touchData.isDragging) {
         this.scene.events.emit(TouchEvents.DRAG_END, {
           id: pointer.id,
           x: pointer.x,
@@ -207,8 +231,13 @@ export default class TouchManager {
     const frameTouches = new Set();
     const activePointers = this.scene.input.manager.pointers.filter(p => p.isDown);
 
-    if (this.debugEnabled && activePointers.length > 1) {
+    if (activePointers.length > 1) {
       console.log(`Active pointers: ${activePointers.length}`);
+    }
+
+    if (activePointers.length === 2 && this.activeTouches.size === 2) {
+      console.log('Attempting to handle pinch gesture');
+      this.handlePinchGesture(activePointers);
     }
 
     activePointers.forEach(pointer => {
@@ -275,6 +304,68 @@ export default class TouchManager {
 
     if (this.debugEnabled) {
       this.updateDebugVisualization();
+    }
+  }
+
+  private handlePinchGesture(activePointers: Phaser.Input.Pointer[]) {
+    if (activePointers.length !== 2) return;
+
+    const pointer1 = activePointers[0];
+    const pointer2 = activePointers[1];
+
+    console.log(
+      `Pinch gesture: Pointer1(${pointer1.x},${pointer1.y}), Pointer2(${pointer2.x},${pointer2.y})`
+    );
+
+    const currentDistance = Phaser.Math.Distance.Between(
+      pointer1.x,
+      pointer1.y,
+      pointer2.x,
+      pointer2.y
+    );
+
+    const centerX = (pointer1.x + pointer2.x) / 2;
+    const centerY = (pointer1.y + pointer2.y) / 2;
+
+    const touch1 = this.activeTouches.get(pointer1.id);
+    const touch2 = this.activeTouches.get(pointer2.id);
+
+    if (!touch1 || !touch2) {
+      console.log('Touch data not found for one or both pointers');
+      return;
+    }
+
+    if (!touch1.previousPinchDistance) {
+      console.log(`Starting pinch gesture, initial distance: ${currentDistance}`);
+      touch1.previousPinchDistance = currentDistance;
+      touch2.previousPinchDistance = currentDistance;
+
+      this.scene.events.emit(TouchEvents.PINCH_START, {
+        center: { x: centerX, y: centerY },
+        distance: currentDistance,
+        pointers: [pointer1.id, pointer2.id]
+      });
+
+      return;
+    }
+
+    const scaleFactor = currentDistance / touch1.previousPinchDistance;
+    console.log(
+      `Pinch move: current=${currentDistance}, previous=${touch1.previousPinchDistance}, scale=${scaleFactor}`
+    );
+
+    if (Math.abs(scaleFactor - 1) > 0.01) {
+      console.log(`Emitting pinch move event with scale factor: ${scaleFactor}`);
+      this.scene.events.emit(TouchEvents.PINCH_MOVE, {
+        center: { x: centerX, y: centerY },
+        distance: currentDistance,
+        previousDistance: touch1.previousPinchDistance,
+        scaleFactor: scaleFactor,
+        pointers: [pointer1.id, pointer2.id]
+      });
+
+      touch1.previousPinchDistance = currentDistance;
+      touch2.previousPinchDistance = currentDistance;
     }
   }
 

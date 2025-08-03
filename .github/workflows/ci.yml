@@ -40,17 +40,6 @@ jobs:
         node-version: 22
         cache: 'npm'
     
-    # Cache Playwright browsers
-    - name: Cache Playwright browsers
-      id: playwright-cache
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          playwright-${{ runner.os }}-
-    
     - run: npm ci
     - run: npx playwright install --with-deps
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
     - run: npx playwright test
