@@ -26,7 +26,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     height: DEFAULT_HEIGHT
   },
   input: {
-    activePointers: 5,
+    activePointers: 2,
     touch: {
       capture: true
     }

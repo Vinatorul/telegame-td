@@ -1,5 +1,6 @@
 interface TelegramWebApp {
   ready(): void;
+  expand(): void;
   viewportHeight: number;
   viewportStableWidth: number;
 }
