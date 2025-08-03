@@ -3,6 +3,7 @@ import { Tower, Enemy, EnemyType, TowerType } from '../objects';
 import { BG_COLOR, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
 import { TileMap, TouchManager, TouchEvents, TouchZones } from '../systems';
 import { TowerSelector } from '../ui';
+import { isTelegramWebApp } from '../game';
 
 export class GameScene extends Phaser.Scene {
   public addToGameField(gameObject: Phaser.GameObjects.GameObject): void {
@@ -486,6 +487,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createZoomButtons() {
+    if (isTelegramWebApp) {
+      console.log('Running in Telegram WebApp, not creating zoom buttons');
+      return;
+    }
+
     const buttonStyle = {
       fontSize: '48px',
       fontStyle: 'bold',

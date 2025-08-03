@@ -4,14 +4,19 @@ import { scenes } from './scenes';
 
 let game: Phaser.Game;
 
-const isTelegramWebApp = typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp;
+export const isTelegramWebApp =
+  typeof window !== 'undefined' &&
+  window.Telegram &&
+  window.Telegram.WebApp &&
+  window.Telegram.WebApp.initData &&
+  window.Telegram.WebApp.initData.length > 0;
 
 window.addEventListener('load', () => {
   console.log('Window loaded, initializing game...');
 
   if (isTelegramWebApp) {
-    console.log('Telegram WebApp detected, expanding to full screen');
-    window.Telegram.WebApp.expand();
+    console.log('Telegram WebApp detected, requesting full screen');
+    window.Telegram.WebApp.requestFullscreen();
   }
 
   let width = DEFAULT_WIDTH;
