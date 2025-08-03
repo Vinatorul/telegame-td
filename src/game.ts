@@ -1,11 +1,17 @@
 import * as Phaser from 'phaser';
 import { GameConfig, DEFAULT_WIDTH, DEFAULT_HEIGHT } from './config';
 import { scenes } from './scenes';
+import { isTelegramWebApp } from './utils/environment';
 
 let game: Phaser.Game;
 
 window.addEventListener('load', () => {
   console.log('Window loaded, initializing game...');
+
+  if (isTelegramWebApp) {
+    console.log('Telegram WebApp detected, requesting full screen');
+    window.Telegram.WebApp.requestFullscreen();
+  }
 
   let width = DEFAULT_WIDTH;
   let height = DEFAULT_HEIGHT;

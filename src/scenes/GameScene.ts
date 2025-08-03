@@ -3,6 +3,7 @@ import { Tower, Enemy, EnemyType, TowerType } from '../objects';
 import { BG_COLOR, UI_PADDING, UI_ELEMENT_SPACING, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '../config';
 import { TileMap, TouchManager, TouchEvents, TouchZones } from '../systems';
 import { TowerSelector } from '../ui';
+import { isTelegramWebApp } from '../utils/environment';
 
 export class GameScene extends Phaser.Scene {
   public addToGameField(gameObject: Phaser.GameObjects.GameObject): void {
@@ -134,28 +135,8 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+    this.input.on('pointerup', (_pointer: Phaser.Input.Pointer) => {
       if (this.isDragging) {
-        const distance = Phaser.Math.Distance.Between(
-          this.dragStartX,
-          this.dragStartY,
-          pointer.x,
-          pointer.y
-        );
-
-        if (distance < 10 && this.isPointerInGameArea(pointer)) {
-          const fieldX = (pointer.x - this.gameFieldContainer.x) / this.currentScale;
-          const fieldY = (pointer.y - this.gameFieldContainer.y) / this.currentScale;
-
-          const { gridX, gridY } = this.tileMap.pixelToGrid(fieldX, fieldY);
-
-          if (this.tileMap.canPlaceTower(gridX, gridY)) {
-            this.selectTile(gridX, gridY);
-          } else {
-            this.clearSelectedTile();
-          }
-        }
-
         this.isDragging = false;
       }
     });
@@ -244,7 +225,8 @@ export class GameScene extends Phaser.Scene {
   private handleTouchTap(data: any) {
     console.log('Touch tap event:', data);
 
-    if (data.control === 'gameField') {
+    // Only handle tap if we're not currently dragging
+    if (data.control === 'gameField' && !this.isDragging) {
       const towerSelectorHeight = 100;
       const visibleHeight = this.gameHeight - towerSelectorHeight;
 
@@ -486,6 +468,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createZoomButtons() {
+    if (isTelegramWebApp) {
+      console.log('Running in Telegram WebApp, not creating zoom buttons');
+      return;
+    }
+
     const buttonStyle = {
       fontSize: '48px',
       fontStyle: 'bold',
